@@ -10,10 +10,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
+enum class WorkoutState { IDLE, RUNNING, PAUSED }
+
 class PelotonTreadObserver : TreadSensorObserver {
     var speed by mutableStateOf(0.0)
     var incline by mutableStateOf(0.0)
     var distance by mutableStateOf(0.0)
+    var pace by mutableStateOf(value = 0.0)
     var workoutState by mutableStateOf(WorkoutState.IDLE)
     var lastUpdateTime = System.currentTimeMillis()
     var elapsedSeconds by mutableStateOf(0)
@@ -22,6 +25,7 @@ class PelotonTreadObserver : TreadSensorObserver {
         System.currentTimeMillis()
         speed = data.getCurrentSpeed()
         incline = data.getCurrentIncline()
+        speedToPace()
         val currentTime = System.currentTimeMillis()
         time_dlt = currentTime - lastUpdateTime
         lastUpdateTime = currentTime
@@ -43,4 +47,30 @@ class PelotonTreadObserver : TreadSensorObserver {
     override fun onConnecting() {}
     override fun onConnectionError() {}
     override fun onDisconnected() {}
+
+    fun speedToPace() {
+        if (speed > 0.0) {
+            pace = 60 / (speed * 1.60934)
+        }
+    }
+    fun startWorkout() {
+        elapsedSeconds = 0
+        distance = 0.0
+        workoutState = WorkoutState.RUNNING
+        lastUpdateTime = System.currentTimeMillis()
+    }
+
+    fun pauseWorkout() {
+        workoutState = WorkoutState.PAUSED
+    }
+
+    fun resumeWorkout() {
+        workoutState = WorkoutState.RUNNING
+        lastUpdateTime = System.currentTimeMillis()
+    }
+
+    fun stopWorkout() {
+        workoutState = WorkoutState.IDLE
+    }
 }
+

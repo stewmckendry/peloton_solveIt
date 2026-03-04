@@ -41,8 +41,6 @@ import okhttp3.FormBody
 import okhttp3.Request
 import com.onepeloton.sensor.tread.TreadSensorManager
 
-enum class WorkoutState { IDLE, RUNNING, PAUSED }
-
 class MainActivity : ComponentActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -66,7 +64,7 @@ fun PelotonSolveItApp() {
     val model = loadVoskModel(context)
     Thread {
         try {
-            sendToSolveIt("hello from Peloton!  App started and called SolveIt!")
+            sendToSolveIt("Hello from Peloton!  I am starting my run session on the Peloton while reading this dialog in SolveIt - learning + running my favourite!  I will be asking sending you messages as I run!")
         } catch (e: Exception) {
             Log.e("PelotonSolveIt", "Error: ${e.message}", e)
         }
@@ -76,16 +74,18 @@ fun PelotonSolveItApp() {
     ) { isGranted ->
         if (isGranted) {
             @SuppressLint("MissingPermission")
-            startListening(model) { transcript ->
-                Log.d("PelotonSolveIt", "Transcript: $transcript")
-                Thread {
-                    try {
-                        sendToSolveIt(transcript)
-                    } catch (e: Exception) {
-                        Log.e("PelotonSolveIt", "Error: ${e.message}", e)
-                    }
-                }.start()
-            }
+            Thread {
+                startListening(model) { transcript ->
+                    Log.d("PelotonSolveIt", "Transcript: $transcript")
+                    Thread {
+                        try {
+                            sendToSolveIt(transcript)
+                        } catch (e: Exception) {
+                            Log.e("PelotonSolveIt", "Error: ${e.message}", e)
+                        }
+                    }.start()
+                }
+            }.start()
         }
     }
     val observer = remember { PelotonTreadObserver() }
@@ -94,14 +94,17 @@ fun PelotonSolveItApp() {
         sensorManager.start()
     }
     PelotonSolveItTheme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Row {
-                SolveItWebView(modifier = Modifier.weight(0.85f).padding(innerPadding))
-                Column(modifier = Modifier.weight(0.15f).background(Red)){
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            bottomBar = {
+                Row {
                     MicButton(onMicClick = { launcher.launch(Manifest.permission.RECORD_AUDIO) })
+                    WorkoutButtons(observer = observer)
                     StatsSidebar(observer = observer)
                 }
             }
+        ) { innerPadding ->
+            SolveItWebView(modifier = Modifier.padding(innerPadding))
         }
     }
 }
@@ -190,8 +193,29 @@ fun MicButton(onMicClick: () -> Unit) {
 
 @Composable
 fun StatsSidebar(observer: PelotonTreadObserver) {
-    Text("Speed: ${observer.speed} mph")
-    Text("Incline: ${observer.incline} %")
+    val p_m = observer.pace.toInt()
+    val p_s = ((observer.pace - p_m) * 60).toInt()
+    Text("Pace: ${String.format(java.util.Locale.US, "%02d:%02d", p_m, p_s)} min/km")
+    Text("Incline: ${"%.2f".format(java.util.Locale.US, observer.incline)} %")
+    val t_m = if (observer.workoutState == WorkoutState.IDLE) 0 else observer.elapsedSeconds / 60
+    val t_s = if (observer.workoutState == WorkoutState.IDLE) 0 else observer.elapsedSeconds % 60
+    Text("Time: ${String.format(java.util.Locale.US, "%02d:%02d", t_m, t_s)}")
+    Text("Distance: ${"%.2f".format(java.util.Locale.US, observer.distance)} km")
+}
+
+@Composable
+fun WorkoutButtons(observer: PelotonTreadObserver) {
+    if( observer.workoutState == WorkoutState.IDLE) {
+        Button(onClick = { observer.startWorkout() }) { Text("▶ Start") }
+    }
+    else if( observer.workoutState == WorkoutState.RUNNING) {
+        Button(onClick = { observer.pauseWorkout() }) { Text("⏸ Pause") }
+        Button(onClick = { observer.stopWorkout() }) { Text("⏹ Stop") }
+    }
+    else if( observer.workoutState == WorkoutState.PAUSED) {
+        Button(onClick = { observer.resumeWorkout() }) { Text("▶ Resume") }
+        Button(onClick = { observer.stopWorkout() }) { Text("⏹ Stop") }
+    }
 }
 
 fun solveItPost(path: String, params: Map<String, String>): String {
