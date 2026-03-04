@@ -41,6 +41,8 @@ import okhttp3.FormBody
 import okhttp3.Request
 import com.onepeloton.sensor.tread.TreadSensorManager
 
+enum class WorkoutState { IDLE, RUNNING, PAUSED }
+
 class MainActivity : ComponentActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

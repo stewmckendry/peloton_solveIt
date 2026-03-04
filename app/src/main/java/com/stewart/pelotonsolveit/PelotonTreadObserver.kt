@@ -17,7 +17,7 @@ class PelotonTreadObserver : TreadSensorObserver {
     var workoutState by mutableStateOf(WorkoutState.IDLE)
     var lastUpdateTime = System.currentTimeMillis()
     var elapsedSeconds by mutableStateOf(0)
-    var time_dlt by mutableStateOf(0)
+    var time_dlt = 0L
     override fun onSensorDataUpdated(data: TreadSensorData) {
         System.currentTimeMillis()
         speed = data.getCurrentSpeed()
@@ -25,8 +25,9 @@ class PelotonTreadObserver : TreadSensorObserver {
         val currentTime = System.currentTimeMillis()
         time_dlt = currentTime - lastUpdateTime
         lastUpdateTime = currentTime
-        if(WorkoutState.RUNNING == true)
-        distance += speed * time_dlt / 3600000
+        if(workoutState == WorkoutState.RUNNING) {
+            distance += speed * time_dlt / 3600000
+        }
     }
     val scope = CoroutineScope(Dispatchers.Default)
     init { scope.launch {
