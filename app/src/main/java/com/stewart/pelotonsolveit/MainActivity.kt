@@ -11,17 +11,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.stewart.pelotonsolveit.ui.theme.PelotonSolveItTheme
 import android.webkit.WebView
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.background
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.width
 import androidx.compose.ui.graphics.Color.Companion.Red
-import androidx.compose.ui.unit.dp
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.rememberLauncherForActivityResult
 import android.Manifest
@@ -31,20 +27,19 @@ import android.content.Intent
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
 import android.util.Log
 import androidx.annotation.RequiresPermission
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import org.vosk.Model
 import org.vosk.Recognizer
 import java.io.File
-import java.nio.ByteBuffer
 import okhttp3.OkHttpClient
 import okhttp3.FormBody
 import okhttp3.Request
-import com.stewart.pelotonsolveit.BuildConfig
+import com.onepeloton.sensor.tread.TreadSensorManager
 
 class MainActivity : ComponentActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -91,13 +86,18 @@ fun PelotonSolveItApp() {
             }
         }
     }
+    val observer = remember { PelotonTreadObserver() }
+    val sensorManager = remember { TreadSensorManager(context, observer, null) }
+    LaunchedEffect(sensorManager) {
+        sensorManager.start()
+    }
     PelotonSolveItTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             Row {
                 SolveItWebView(modifier = Modifier.weight(0.85f).padding(innerPadding))
                 Column(modifier = Modifier.weight(0.15f).background(Red)){
                     MicButton(onMicClick = { launcher.launch(Manifest.permission.RECORD_AUDIO) })
-                    StatsSidebar()
+                    StatsSidebar(observer = observer)
                 }
             }
         }
@@ -187,9 +187,9 @@ fun MicButton(onMicClick: () -> Unit) {
 }
 
 @Composable
-fun StatsSidebar() {
-    // call API for polling stats
-    // render data in tiles with stats on duration, distance, pace, elevation
+fun StatsSidebar(observer: PelotonTreadObserver) {
+    Text("Speed: ${observer.speed} mph")
+    Text("Incline: ${observer.incline} %")
 }
 
 fun solveItPost(path: String, params: Map<String, String>): String {

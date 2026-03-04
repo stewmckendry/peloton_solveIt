@@ -68,4 +68,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("com.alphacephei:vosk-android:0.3.75")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation(files("libs/peloton-sensor.jar"))
 }
