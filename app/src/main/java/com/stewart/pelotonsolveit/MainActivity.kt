@@ -29,6 +29,7 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.speech.RecognizerIntent
 import android.util.Log
+import android.webkit.WebViewClient
 import androidx.annotation.RequiresPermission
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -40,6 +41,8 @@ import okhttp3.OkHttpClient
 import okhttp3.FormBody
 import okhttp3.Request
 import com.onepeloton.sensor.tread.TreadSensorManager
+import org.json.JSONObject
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -62,13 +65,8 @@ class MainActivity : ComponentActivity() {
 fun PelotonSolveItApp() {
     val context = LocalContext.current
     val model = loadVoskModel(context)
-    Thread {
-        try {
-            sendToSolveIt("Hello from Peloton!  I am starting my run session on the Peloton while reading this dialog in SolveIt - learning + running my favourite!  I will be asking sending you messages as I run!")
-        } catch (e: Exception) {
-            Log.e("PelotonSolveIt", "Error: ${e.message}", e)
-        }
-    }.start()
+    val bridge = SolveItJSBridge()
+    var webView: WebView? = null
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -79,7 +77,7 @@ fun PelotonSolveItApp() {
                     Log.d("PelotonSolveIt", "Transcript: $transcript")
                     Thread {
                         try {
-                            sendToSolveIt(transcript)
+                            sendToSolveIt(transcript, bridge)
                         } catch (e: Exception) {
                             Log.e("PelotonSolveIt", "Error: ${e.message}", e)
                         }
@@ -98,13 +96,32 @@ fun PelotonSolveItApp() {
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
                 Row {
-                    MicButton(onMicClick = { launcher.launch(Manifest.permission.RECORD_AUDIO) })
+                    MicButton(onMicClick = {
+                        launcher.launch(Manifest.permission.RECORD_AUDIO)
+                        webView?.evaluateJavascript("Android.setFocusedMessage(\n" +
+                                "    new URLSearchParams(window.location.search).get('name'),\n" +
+                                "    document.querySelector('.editable.ring-2')?.id\n" +
+                                ")\n", null)
+                    })
                     WorkoutButtons(observer = observer)
                     StatsSidebar(observer = observer)
                 }
             }
         ) { innerPadding ->
-            SolveItWebView(modifier = Modifier.padding(innerPadding))
+            SolveItWebView(
+                modifier = Modifier.padding(innerPadding),
+                bridge, onWebViewCreated = { wv -> webView = wv },
+                onPageFinished = {
+                    Thread {
+                        try {
+                            sendToSolveIt("Hello from Peloton!  I am starting my run session on the Peloton while reading this dialog in SolveIt - learning + running my favourite!  I will be asking sending you messages as I run!",
+                                bridge)
+                        } catch (e: Exception) {
+                            Log.e("PelotonSolveIt", "Error: ${e.message}", e)
+                        }
+                    }.start()
+                }
+            )
         }
     }
 }
@@ -129,7 +146,7 @@ fun startListening(model: Model, onResult: (String) -> Unit) {
         while (audio.read(buffer, 0, bufferSize) > 0) {
             if (recognizer.acceptWaveForm(buffer, bufferSize)) break
         }
-        val json = org.json.JSONObject(recognizer.result)
+        val json = JSONObject(recognizer.result)
         val text = json.getString("text")
         onResult(text)
     } catch (e: SecurityException) {
@@ -170,7 +187,7 @@ fun loadVoskModel(context: Context): Model {
 }
 
 @Composable
-fun SolveItWebView(modifier: Modifier = Modifier) {
+fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, onWebViewCreated: (WebView) -> Unit, onPageFinished: () -> Unit) {
     AndroidView(
         modifier = modifier,
         factory = { context ->
@@ -180,7 +197,13 @@ fun SolveItWebView(modifier: Modifier = Modifier) {
                 settings.javaScriptEnabled = true
                 settings.builtInZoomControls = true
                 loadUrl("https://solve.it.com")
-            }
+                addJavascriptInterface(bridge, "Android")
+                webViewClient = object : WebViewClient() {
+                    override fun onPageFinished(view: WebView, url: String) {
+                        onPageFinished()
+                    }
+                }
+            }.also { onWebViewCreated(it) }
         })
 }
 
@@ -195,12 +218,12 @@ fun MicButton(onMicClick: () -> Unit) {
 fun StatsSidebar(observer: PelotonTreadObserver) {
     val p_m = observer.pace.toInt()
     val p_s = ((observer.pace - p_m) * 60).toInt()
-    Text("Pace: ${String.format(java.util.Locale.US, "%02d:%02d", p_m, p_s)} min/km")
-    Text("Incline: ${"%.2f".format(java.util.Locale.US, observer.incline)} %")
+    Text("Pace: ${String.format(Locale.US, "%02d:%02d", p_m, p_s)} min/km")
+    Text("Incline: ${"%.2f".format(Locale.US, observer.incline)} %")
     val t_m = if (observer.workoutState == WorkoutState.IDLE) 0 else observer.elapsedSeconds / 60
     val t_s = if (observer.workoutState == WorkoutState.IDLE) 0 else observer.elapsedSeconds % 60
-    Text("Time: ${String.format(java.util.Locale.US, "%02d:%02d", t_m, t_s)}")
-    Text("Distance: ${"%.2f".format(java.util.Locale.US, observer.distance)} km")
+    Text("Time: ${String.format(Locale.US, "%02d:%02d", t_m, t_s)}")
+    Text("Distance: ${"%.2f".format(Locale.US, observer.distance)} km")
 }
 
 @Composable
@@ -222,15 +245,41 @@ fun solveItPost(path: String, params: Map<String, String>): String {
     val client = OkHttpClient()
     val bodyBuilder = FormBody.Builder()
     params.forEach { (k, v) -> bodyBuilder.add(k, v) }
+    Log.d("PelotonSolveIt", "POST $path params=$params")
     val request = Request.Builder()
         .url("${BuildConfig.SOLVEIT_URL}/$path")
         .addHeader("Cookie", "_solveit=${BuildConfig.SOLVEIT_TOKEN}")
         .post(bodyBuilder.build())
         .build()
-    return client.newCall(request).execute().body?.string() ?: ""
+    val responseBody = client.newCall(request).execute().body?.string() ?: ""
+    Log.d("PelotonSolveIt", "Response: $responseBody")
+    return responseBody
 }
 
-fun sendToSolveIt(msg: String) {
-    val msgId = solveItPost("add_relative_", mapOf("dlg_name" to BuildConfig.SOLVEIT_DIALOG, "content" to msg, "msg_type" to "prompt"))
-    val result = solveItPost("add_runq_", mapOf("dlg_name" to BuildConfig.SOLVEIT_DIALOG, "id_" to msgId, "api" to "true"))
+fun sendToSolveIt(msg: String, bridge: SolveItJSBridge) {
+    val dlgName = bridge.dlgName
+    val msgId = bridge.msgId
+    if( dlgName.isEmpty() && msgId.isEmpty() ) {
+        Log.d("PelotonSolveIt", "POST to SolveIt skipped - no dlgName or msgId found")
+        return
+    }
+    val params = mutableMapOf(
+        "dlg_name" to dlgName,
+        "content" to msg,
+        "msg_type" to "prompt"
+    )
+    if (msgId.isNotEmpty()) params["id"] = msgId
+    else params["placement"] = "at_end"
+    val addMsgResult = solveItPost(
+        "add_relative_",
+        params)
+    val json = JSONObject(addMsgResult)
+    val newMsgId = json.getString("id")
+    Log.d("PelotonSolveIt", "msgId=$msgId")
+    val result = solveItPost(
+        "add_runq_",
+        mapOf("dlg_name" to dlgName,
+            "id_" to newMsgId,
+            "api" to "true"))
+    Log.d("PelotonSolveIt", "result=$result")
 }
