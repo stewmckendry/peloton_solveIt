@@ -7,8 +7,9 @@ class SolveItJSBridge {
     var msgId: String = ""
 
     @JavascriptInterface
-    fun setFocusedMessage(dlgName: String, msgId: String) {
-        this.dlgName = dlgName
-        this.msgId = msgId
+    fun setFocusedMessage(dlgName: String?, msgId: String?) {
+        this.dlgName = dlgName ?: ""
+        this.msgId = msgId ?: ""
     }
+
 }

@@ -1,5 +1,6 @@
 package com.stewart.pelotonsolveit
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,12 +25,12 @@ class PelotonTreadObserver : TreadSensorObserver {
     var elapsedSeconds by mutableStateOf(0)
     var time_dlt = 0L
     override fun onSensorDataUpdated(data: TreadSensorData) {
-        System.currentTimeMillis()
         speed = data.getCurrentSpeed()
         incline = data.getCurrentIncline()
         speedToPace()
         val currentTime = System.currentTimeMillis()
         time_dlt = currentTime - lastUpdateTime
+        Log.d("PelotonSolveIt", "sensor update: speed=$speed pace=$pace time_dlt=${time_dlt}ms distance=$distance")
         lastUpdateTime = currentTime
         if(workoutState == WorkoutState.RUNNING) {
             distance += speed * MPH_TO_KMH * time_dlt / MS_PER_HOUR
@@ -52,7 +53,7 @@ class PelotonTreadObserver : TreadSensorObserver {
 
     fun speedToPace() {
         if (speed > 0.0) {
-            pace = 60 / (speed * 1.60934)
+            pace = 60 / (speed * MPH_TO_KMH)
         }
     }
     fun startWorkout() {

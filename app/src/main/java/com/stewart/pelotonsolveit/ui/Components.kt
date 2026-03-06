@@ -3,10 +3,12 @@ package com.stewart.pelotonsolveit
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -102,11 +104,22 @@ fun ElapsedTime(observer: PelotonTreadObserver) {
 }
 
 @Composable
-fun StatsSidebar(observer: PelotonTreadObserver, modifier: Modifier) {
-    //val p_m = observer.pace.toInt()
-    //val p_s = ((observer.pace - p_m) * 60).toInt()
-    //ItemBox { StatItem(label = "PACE", value = String.format(Locale.US, "%02d:%02d", p_m, p_s), modifier=modifier) }
-    //ItemBox { StatItem(label = "INCLINE", value = String.format(Locale.US, format="%.1f", observer.incline), modifier=modifier) }
+fun StatsLeft(observer: PelotonTreadObserver, modifier: Modifier = Modifier) {
     ElapsedTime(observer)
     ItemBox { StatItem(label = "DISTANCE", value = "%.2f km".format(observer.distance)) }
+}
+
+@Composable
+fun StatsRight(observer: PelotonTreadObserver, modifier: Modifier = Modifier) {
+    val p_m = observer.pace.toInt()
+    val p_s = ((observer.pace - p_m) * 60).toInt()
+    ItemBox { StatItem(label = "PACE", value = String.format(Locale.US, "%02d:%02d", p_m, p_s), modifier=modifier) }
+    ItemBox { StatItem(label = "INCLINE", value = String.format(Locale.US, format="%.1f", observer.incline), modifier=modifier) }
+}
+
+@Composable
+fun BrightButton(isDarkMode: Boolean, onToggleDarkMode: () -> Unit) {
+    IconButton(onClick = { onToggleDarkMode() }) {
+        Text(if (isDarkMode) "☀️" else "🌙")
+    }
 }

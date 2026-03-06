@@ -21,11 +21,11 @@ fun solveItPost(path: String, params: Map<String, String>): String {
     return responseBody
 }
 
-fun sendToSolveIt(msg: String, bridge: SolveItJSBridge) {
+fun sendToSolveIt(msg: String, bridge: SolveItJSBridge, pin: Boolean = false, placement: String? = null) {
     val dlgName = bridge.dlgName
     val msgId = bridge.msgId
-    if( dlgName.isEmpty() && msgId.isEmpty() ) {
-        Log.d("PelotonSolveIt", "POST to SolveIt skipped - no dlgName or msgId found")
+    if( dlgName.isEmpty()) {
+        Log.d("PelotonSolveIt", "POST to SolveIt skipped - no dlgName ($dlgName) or msgId ($msgId) found")
         return
     }
     val params = mutableMapOf(
@@ -33,19 +33,24 @@ fun sendToSolveIt(msg: String, bridge: SolveItJSBridge) {
         "content" to msg,
         "msg_type" to "prompt"
     )
-    if (msgId.isNotEmpty()) params["id"] = msgId
+    if (placement != null) params["placement"] = placement
+    else if (msgId.isNotEmpty()) params["id_"] = msgId
     else params["placement"] = "at_end"
     val addMsgResult = solveItPost(
         "add_relative_",
         params)
     val json = JSONObject(addMsgResult)
     val newMsgId = json.getString("id")
-    Log.d("PelotonSolveIt", "msgId=$msgId")
-    val result = solveItPost(
+    Log.d("PelotonSolveIt", "POST to SolveIt - add $newMsgId - result - $addMsgResult")
+    val runMsgResult = solveItPost(
         "add_runq_",
         mapOf("dlg_name" to dlgName,
             "id_" to newMsgId,
             "api" to "true"))
-    Log.d("PelotonSolveIt", "result=$result")
+    Log.d("PelotonSolveIt", "POST to SolveIt - run $newMsgId - result=$runMsgResult")
+    if (pin) {
+        val updateMsgResult = solveItPost("update_msg_", mapOf("dlg_name" to dlgName, "id_" to newMsgId, "pinned" to "1"))
+        Log.d("PelotonSolveIt", "POST to SolveIt - update msg $newMsgId to pinned - result $updateMsgResult")
+    }
 }
 

@@ -30,7 +30,10 @@ import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
@@ -64,6 +67,7 @@ fun PelotonSolveItApp() {
     val model = loadVoskModel(context)
     val bridge = SolveItJSBridge()
     var webView: WebView? = null
+    var isDarkMode by remember { mutableStateOf(true) }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -98,9 +102,14 @@ fun PelotonSolveItApp() {
                         "Android.setFocusedMessage(\n" +
                                 "    new URLSearchParams(window.location.search).get('name'),\n" +
                                 "    document.querySelector('.editable.ring-2')?.id\n" +
-                                ")\n", null
-                    )
-                })
+                                ")\n", null) },
+                    isDarkMode, onToggleDarkMode = {
+                        if (isDarkMode)
+                            webView?.evaluateJavascript("document.documentElement.classList.remove('dark')", null)
+                        else
+                            webView?.evaluateJavascript("document.documentElement.classList.add('dark')", null)
+                        isDarkMode = !isDarkMode
+                    })
             },
             bottomBar = {
                 BottomBar(observer)
@@ -112,8 +121,9 @@ fun PelotonSolveItApp() {
                 onPageFinished = {
                     Thread {
                         try {
+                            Thread.sleep(1000L)
                             sendToSolveIt("Hello from Peloton!  I am starting my run session on the Peloton while reading this dialog in SolveIt - learning + running my favourite!  I will be asking sending you messages as I run!",
-                                bridge)
+                                bridge, pin = true, placement = "at_end")
                         } catch (e: Exception) {
                             Log.e("PelotonSolveIt", "Error: ${e.message}", e)
                         }
@@ -175,13 +185,15 @@ fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, onWeb
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String) {
                         view.evaluateJavascript("document.getElementById('dialog-container').style.height = '100%';\n" +
-                                "document.getElementById('dialog-container').style.minHeight = window.innerHeight + 'px';\n" +
-                                "document.documentElement.classList.add('dark');\n", null)
-                        view.evaluateJavascript("Android.setFocusedMessage(\n" +
+                                "document.getElementById('dialog-container').style.minHeight = window.innerHeight + 'px';\n", null)
+                        view.postDelayed({
+                            view.evaluateJavascript("Android.setFocusedMessage(\n" +
                                     "    new URLSearchParams(window.location.search).get('name'),\n" +
                                     "    document.querySelector('.editable.ring-2')?.id\n" +
                                     ")\n", null)
-                        onPageFinished()
+                            view.evaluateJavascript("document.documentElement.classList.add('dark')", null)
+                            onPageFinished()
+                        }, 500)
                     }
                     override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                         Log.e("PelotonSolveIt", "WebView error: ${error.description} for ${request.url} (is WS: ${request.url.toString().startsWith("ws")})")
