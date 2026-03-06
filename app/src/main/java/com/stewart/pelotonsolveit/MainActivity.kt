@@ -7,42 +7,37 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.stewart.pelotonsolveit.ui.theme.PelotonSolveItTheme
 import android.webkit.WebView
+import android.webkit.WebSettings
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.background
-import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.rememberLauncherForActivityResult
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.Build
 import android.speech.RecognizerIntent
 import android.util.Log
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebViewClient
+import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewFeature
 import org.vosk.Model
 import org.vosk.Recognizer
-import java.io.File
-import okhttp3.OkHttpClient
-import okhttp3.FormBody
-import okhttp3.Request
 import com.onepeloton.sensor.tread.TreadSensorManager
 import org.json.JSONObject
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -52,6 +47,7 @@ class MainActivity : ComponentActivity() {
             if (transcript != null) Log.d("PelotonSolveIt", "Transcript: $transcript")
         }
     }
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -61,6 +57,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun PelotonSolveItApp() {
     val context = LocalContext.current
@@ -94,22 +91,23 @@ fun PelotonSolveItApp() {
     PelotonSolveItTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            bottomBar = {
-                Row {
-                    MicButton(onMicClick = {
-                        launcher.launch(Manifest.permission.RECORD_AUDIO)
-                        webView?.evaluateJavascript("Android.setFocusedMessage(\n" +
+            topBar = {
+                TopBar(observer, webView, onMicClick = {
+                    launcher.launch(Manifest.permission.RECORD_AUDIO)
+                    webView?.evaluateJavascript(
+                        "Android.setFocusedMessage(\n" +
                                 "    new URLSearchParams(window.location.search).get('name'),\n" +
                                 "    document.querySelector('.editable.ring-2')?.id\n" +
-                                ")\n", null)
-                    })
-                    WorkoutButtons(observer = observer)
-                    StatsSidebar(observer = observer)
-                }
+                                ")\n", null
+                    )
+                })
+            },
+            bottomBar = {
+                BottomBar(observer)
             }
         ) { innerPadding ->
             SolveItWebView(
-                modifier = Modifier.padding(innerPadding),
+                modifier = Modifier.padding(innerPadding).fillMaxSize(),
                 bridge, onWebViewCreated = { wv -> webView = wv },
                 onPageFinished = {
                     Thread {
@@ -155,37 +153,7 @@ fun startListening(model: Model, onResult: (String) -> Unit) {
     }
 }
 
-fun copyAssets(context: Context, srcPath: String, destDir: File, depth: Int = 0) {
-    val items = context.assets.list(srcPath)
-    Log.d("PelotonSolveIt", "Copying: $srcPath to $destDir")
-    if (items == null || items.isEmpty()) {
-        // it's a file, copy it
-        context.assets.open(srcPath).use { input ->
-            File(destDir, srcPath.substringAfterLast("/")).outputStream().use { output ->
-                input.copyTo(output)
-            }
-        }
-    } else {
-        // it's a folder
-        val targetDir = if (depth == 0) destDir else {
-            File(destDir, srcPath.substringAfterLast("/")).also { it.mkdirs() }
-        }
-        items.forEach { item ->
-            copyAssets(context, "$srcPath/$item", targetDir, depth + 1)
-        }
-    }
-}
-
-
-fun loadVoskModel(context: Context): Model {
-    val modelDir = File(context.filesDir, "vosk-model")
-    if (!modelDir.exists()) {
-        modelDir.mkdirs()
-        copyAssets(context, "vosk-model-small-en-us-0.15", modelDir)
-    }
-    return Model(modelDir.absolutePath)
-}
-
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, onWebViewCreated: (WebView) -> Unit, onPageFinished: () -> Unit) {
     AndroidView(
@@ -196,90 +164,31 @@ fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, onWeb
                 settings.loadWithOverviewMode = true
                 settings.javaScriptEnabled = true
                 settings.builtInZoomControls = true
-                loadUrl("https://solve.it.com")
+                settings.userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                settings.domStorageEnabled = true
+                settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                settings.allowContentAccess = true
+                @Suppress("DEPRECATION")
+                WebSettingsCompat.setForceDark(settings, WebSettingsCompat.FORCE_DARK_ON)
                 addJavascriptInterface(bridge, "Android")
+                loadUrl("https://solve.it.com")
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String) {
+                        view.evaluateJavascript("document.getElementById('dialog-container').style.height = '100%';\n" +
+                                "document.getElementById('dialog-container').style.minHeight = window.innerHeight + 'px';\n" +
+                                "document.documentElement.classList.add('dark');\n", null)
+                        view.evaluateJavascript("Android.setFocusedMessage(\n" +
+                                    "    new URLSearchParams(window.location.search).get('name'),\n" +
+                                    "    document.querySelector('.editable.ring-2')?.id\n" +
+                                    ")\n", null)
                         onPageFinished()
+                    }
+                    override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
+                        Log.e("PelotonSolveIt", "WebView error: ${error.description} for ${request.url} (is WS: ${request.url.toString().startsWith("ws")})")
                     }
                 }
             }.also { onWebViewCreated(it) }
         })
 }
 
-@Composable
-fun MicButton(onMicClick: () -> Unit) {
-    Button(onClick = onMicClick) {
-        Text("🎤")
-    }
-}
 
-@Composable
-fun StatsSidebar(observer: PelotonTreadObserver) {
-    val p_m = observer.pace.toInt()
-    val p_s = ((observer.pace - p_m) * 60).toInt()
-    Text("Pace: ${String.format(Locale.US, "%02d:%02d", p_m, p_s)} min/km")
-    Text("Incline: ${"%.2f".format(Locale.US, observer.incline)} %")
-    val t_m = if (observer.workoutState == WorkoutState.IDLE) 0 else observer.elapsedSeconds / 60
-    val t_s = if (observer.workoutState == WorkoutState.IDLE) 0 else observer.elapsedSeconds % 60
-    Text("Time: ${String.format(Locale.US, "%02d:%02d", t_m, t_s)}")
-    Text("Distance: ${"%.2f".format(Locale.US, observer.distance)} km")
-}
-
-@Composable
-fun WorkoutButtons(observer: PelotonTreadObserver) {
-    if( observer.workoutState == WorkoutState.IDLE) {
-        Button(onClick = { observer.startWorkout() }) { Text("▶ Start") }
-    }
-    else if( observer.workoutState == WorkoutState.RUNNING) {
-        Button(onClick = { observer.pauseWorkout() }) { Text("⏸ Pause") }
-        Button(onClick = { observer.stopWorkout() }) { Text("⏹ Stop") }
-    }
-    else if( observer.workoutState == WorkoutState.PAUSED) {
-        Button(onClick = { observer.resumeWorkout() }) { Text("▶ Resume") }
-        Button(onClick = { observer.stopWorkout() }) { Text("⏹ Stop") }
-    }
-}
-
-fun solveItPost(path: String, params: Map<String, String>): String {
-    val client = OkHttpClient()
-    val bodyBuilder = FormBody.Builder()
-    params.forEach { (k, v) -> bodyBuilder.add(k, v) }
-    Log.d("PelotonSolveIt", "POST $path params=$params")
-    val request = Request.Builder()
-        .url("${BuildConfig.SOLVEIT_URL}/$path")
-        .addHeader("Cookie", "_solveit=${BuildConfig.SOLVEIT_TOKEN}")
-        .post(bodyBuilder.build())
-        .build()
-    val responseBody = client.newCall(request).execute().body?.string() ?: ""
-    Log.d("PelotonSolveIt", "Response: $responseBody")
-    return responseBody
-}
-
-fun sendToSolveIt(msg: String, bridge: SolveItJSBridge) {
-    val dlgName = bridge.dlgName
-    val msgId = bridge.msgId
-    if( dlgName.isEmpty() && msgId.isEmpty() ) {
-        Log.d("PelotonSolveIt", "POST to SolveIt skipped - no dlgName or msgId found")
-        return
-    }
-    val params = mutableMapOf(
-        "dlg_name" to dlgName,
-        "content" to msg,
-        "msg_type" to "prompt"
-    )
-    if (msgId.isNotEmpty()) params["id"] = msgId
-    else params["placement"] = "at_end"
-    val addMsgResult = solveItPost(
-        "add_relative_",
-        params)
-    val json = JSONObject(addMsgResult)
-    val newMsgId = json.getString("id")
-    Log.d("PelotonSolveIt", "msgId=$msgId")
-    val result = solveItPost(
-        "add_runq_",
-        mapOf("dlg_name" to dlgName,
-            "id_" to newMsgId,
-            "api" to "true"))
-    Log.d("PelotonSolveIt", "result=$result")
-}

@@ -11,6 +11,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
 enum class WorkoutState { IDLE, RUNNING, PAUSED }
+const val MPH_TO_KMH = 1.60934
+const val MS_PER_HOUR = 3_600_000.0
 
 class PelotonTreadObserver : TreadSensorObserver {
     var speed by mutableStateOf(0.0)
@@ -30,7 +32,7 @@ class PelotonTreadObserver : TreadSensorObserver {
         time_dlt = currentTime - lastUpdateTime
         lastUpdateTime = currentTime
         if(workoutState == WorkoutState.RUNNING) {
-            distance += speed * time_dlt / 3600000
+            distance += speed * MPH_TO_KMH * time_dlt / MS_PER_HOUR
         }
     }
     val scope = CoroutineScope(Dispatchers.Default)
