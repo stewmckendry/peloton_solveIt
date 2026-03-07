@@ -1,0 +1,246 @@
+kotlin version: 2.2.10
+error message: java.lang.RuntimeException: Exception while generating code for:
+FUN name:PelotonSolveItApp visibility:public modality:FINAL returnType:kotlin.Unit
+  VALUE_PARAMETER kind:Regular name:$composer index:0 type:androidx.compose.runtime.Composer? [assignable]
+  VALUE_PARAMETER kind:Regular name:$changed index:1 type:kotlin.Int
+  annotations:
+    Composable
+  BLOCK_BODY
+    BLOCK type=kotlin.Unit origin=null
+      SET_VAR '$composer: androidx.compose.runtime.Composer? [assignable] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=kotlin.Unit origin=null
+        CALL 'public abstract fun startRestartGroup (key: kotlin.Int): androidx.compose.runtime.Composer declared in androidx.compose.runtime.Composer' type=androidx.compose.runtime.Composer origin=null
+          ARG <this>: GET_VAR '$composer: androidx.compose.runtime.Composer? [assignable] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=androidx.compose.runtime.Composer? origin=null
+          ARG key: CONST Int type=kotlin.Int value=-1023090164
+      CALL 'public final fun sourceInformation (composer: androidx.compose.runtime.Composer, sourceInformation: kotlin.String): kotlin.Unit declared in androidx.compose.runtime.ComposerKt' type=kotlin.Unit origin=null
+        ARG composer: GET_VAR '$composer: androidx.compose.runtime.Composer? [assignable] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=androidx.compose.runtime.Composer? origin=null
+        ARG sourceInformation: CONST String type=kotlin.String value="C(PelotonSolveItApp)93@3463L472:MainActivity.kt#tejuii"
+    WHEN type=kotlin.Unit origin=IF
+      BRANCH
+        if: CALL 'public abstract fun shouldExecute (parametersChanged: kotlin.Boolean, flags: kotlin.Int): kotlin.Boolean declared in androidx.compose.runtime.Composer' type=kotlin.Boolean origin=null
+          ARG <this>: GET_VAR '$composer: androidx.compose.runtime.Composer? [assignable] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=androidx.compose.runtime.Composer? origin=null
+          ARG parametersChanged: CALL 'public final fun not (): kotlin.Boolean [operator] declared in kotlin.Boolean' type=kotlin.Boolean origin=null
+            ARG <this>: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=null
+              ARG arg0: GET_VAR '$changed: kotlin.Int declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=kotlin.Int origin=null
+              ARG arg1: CONST Int type=kotlin.Int value=0
+          ARG flags: CALL 'public final fun and (other: kotlin.Int): kotlin.Int [infix] declared in kotlin.Int' type=kotlin.Int origin=null
+            ARG <this>: GET_VAR '$changed: kotlin.Int declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=kotlin.Int origin=null
+            ARG other: CONST Int type=kotlin.Int value=1
+        then: BLOCK type=kotlin.Unit origin=null
+          WHEN type=kotlin.Unit origin=IF
+            BRANCH
+              if: CALL 'public final fun isTraceInProgress (): kotlin.Boolean declared in androidx.compose.runtime.ComposerKt' type=kotlin.Boolean origin=null
+              then: CALL 'public final fun traceEventStart (key: kotlin.Int, dirty1: kotlin.Int, dirty2: kotlin.Int, info: kotlin.String): kotlin.Unit declared in androidx.compose.runtime.ComposerKt' type=kotlin.Unit origin=null
+                ARG key: CONST Int type=kotlin.Int value=-1023090164
+                ARG dirty1: GET_VAR '$changed: kotlin.Int declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=kotlin.Int origin=null
+                ARG dirty2: CONST Int type=kotlin.Int value=-1
+                ARG info: CONST String type=kotlin.String value="com.stewart.pelotonsolveit.PelotonSolveItApp (MainActivity.kt:61)"
+          VAR name:context type:android.content.Context [val]
+            CALL 'public final fun <get-current> (): T of androidx.compose.runtime.CompositionLocal [inline] declared in androidx.compose.runtime.CompositionLocal' type=android.content.Context origin=GET_PROPERTY
+              ARG <this>: TYPE_OP type=androidx.compose.runtime.CompositionLocal<T of androidx.compose.runtime.CompositionLocal> origin=IMPLICIT_CAST typeOperand=androidx.compose.runtime.CompositionLocal<T of androidx.compose.runtime.CompositionLocal>
+                CALL 'public final fun <get-LocalContext> (): androidx.compose.runtime.ProvidableCompositionLocal<android.content.Context> declared in androidx.compose.ui.platform.AndroidCompositionLocals_androidKt' type=androidx.compose.runtime.ProvidableCompositionLocal<android.content.Context> origin=GET_PROPERTY
+          VAR name:model type:org.vosk.Model [val]
+            CALL 'public final fun loadVoskModel (context: android.content.Context): org.vosk.Model declared in com.stewart.pelotonsolveit.MainActivityKt' type=org.vosk.Model origin=null
+              ARG context: GET_VAR 'val context: android.content.Context [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=android.content.Context origin=null
+          CALL 'public open fun start (): kotlin.Unit declared in java.lang.Thread' type=kotlin.Unit origin=null
+            ARG <this>: CONSTRUCTOR_CALL 'public constructor <init> (p0: @[FlexibleNullability] java.lang.Runnable?) declared in java.lang.Thread' type=java.lang.Thread origin=null
+              ARG p0: CALL 'public final fun remember <T> (calculation: @[DisallowComposableCalls] kotlin.Function0<T of androidx.compose.runtime.ComposablesKt.remember>): T of androidx.compose.runtime.ComposablesKt.remember [inline] declared in androidx.compose.runtime.ComposablesKt' type=java.lang.Runnable origin=androidx.compose.compiler.plugins.kotlin.lower.ComposeMemoizedLambdaOrigin@3e9e1d5f
+                TYPE_ARG T: java.lang.Runnable
+                ARG calculation: BLOCK type=kotlin.Function0<java.lang.Runnable> origin=LAMBDA
+                  COMPOSITE type=kotlin.Unit origin=null
+                  FUNCTION_REFERENCE 'private final fun PelotonSolveItApp$lambda$0 (): java.lang.Runnable declared in com.stewart.pelotonsolveit.MainActivityKt' type=kotlin.Function0<java.lang.Runnable> origin=INLINE_LAMBDA reflectionTarget=null
+          VAR name:launcher type:androidx.activity.compose.ManagedActivityResultLauncher<kotlin.String, kotlin.Boolean> [val]
+            CALL 'public final fun rememberLauncherForActivityResult <I, O> (contract: androidx.activity.result.contract.ActivityResultContract<I of androidx.activity.compose.ActivityResultRegistryKt.rememberLauncherForActivityResult, O of androidx.activity.compose.ActivityResultRegistryKt.rememberLauncherForActivityResult>, onResult: kotlin.Function1<O of androidx.activity.compose.ActivityResultRegistryKt.rememberLauncherForActivityResult, kotlin.Unit>): androidx.activity.compose.ManagedActivityResultLauncher<I of androidx.activity.compose.ActivityResultRegistryKt.rememberLauncherForActivityResult, O of androidx.activity.compose.ActivityResultRegistryKt.rememberLauncherForActivityResult> declared in androidx.activity.compose.ActivityResultRegistryKt' type=androidx.activity.compose.ManagedActivityResultLauncher<kotlin.String, kotlin.Boolean> origin=null
+              TYPE_ARG I: kotlin.String
+              TYPE_ARG O: kotlin.Boolean
+              ARG contract: CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in androidx.activity.result.contract.ActivityResultContracts.RequestPermission' type=androidx.activity.result.contract.ActivityResultContracts.RequestPermission origin=null
+              ARG onResult: CALL 'public final fun remember <T> (key1: kotlin.Any?, calculation: @[DisallowComposableCalls] kotlin.Function0<T of androidx.compose.runtime.ComposablesKt.remember>): T of androidx.compose.runtime.ComposablesKt.remember [inline] declared in androidx.compose.runtime.ComposablesKt' type=kotlin.Function1<kotlin.Boolean, kotlin.Unit> origin=androidx.compose.compiler.plugins.kotlin.lower.ComposeMemoizedLambdaOrigin@3e9e1d5f
+                TYPE_ARG T: kotlin.Function1<kotlin.Boolean, kotlin.Unit>
+                ARG key1: GET_VAR 'val model: org.vosk.Model [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=org.vosk.Model origin=null
+                ARG calculation: BLOCK type=kotlin.Function0<kotlin.Function1<kotlin.Boolean, kotlin.Unit>> origin=LAMBDA
+                  COMPOSITE type=kotlin.Unit origin=null
+                  FUNCTION_REFERENCE 'private final fun PelotonSolveItApp$lambda$1 ($model: org.vosk.Model): kotlin.Function1<kotlin.Boolean, kotlin.Unit> declared in com.stewart.pelotonsolveit.MainActivityKt' type=kotlin.Function0<kotlin.Function1<kotlin.Boolean, kotlin.Unit>> origin=INLINE_LAMBDA reflectionTarget=null
+                    ARG $model: GET_VAR 'val model: org.vosk.Model [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=org.vosk.Model origin=null
+          VAR name:observer type:com.stewart.pelotonsolveit.PelotonTreadObserver [val]
+            CALL 'public final fun remember <T> (calculation: @[DisallowComposableCalls] kotlin.Function0<T of androidx.compose.runtime.ComposablesKt.remember>): T of androidx.compose.runtime.ComposablesKt.remember [inline] declared in androidx.compose.runtime.ComposablesKt' type=com.stewart.pelotonsolveit.PelotonTreadObserver origin=null
+              TYPE_ARG T: com.stewart.pelotonsolveit.PelotonTreadObserver
+              ARG calculation: BLOCK type=kotlin.Function0<com.stewart.pelotonsolveit.PelotonTreadObserver> origin=LAMBDA
+                COMPOSITE type=kotlin.Unit origin=null
+                FUNCTION_REFERENCE 'private final fun PelotonSolveItApp$lambda$2 (): com.stewart.pelotonsolveit.PelotonTreadObserver declared in com.stewart.pelotonsolveit.MainActivityKt' type=kotlin.Function0<com.stewart.pelotonsolveit.PelotonTreadObserver> origin=INLINE_LAMBDA reflectionTarget=null
+          VAR name:sensorManager type:com.onepeloton.sensor.tread.TreadSensorManager [val]
+            CALL 'public final fun remember <T> (calculation: @[DisallowComposableCalls] kotlin.Function0<T of androidx.compose.runtime.ComposablesKt.remember>): T of androidx.compose.runtime.ComposablesKt.remember [inline] declared in androidx.compose.runtime.ComposablesKt' type=com.onepeloton.sensor.tread.TreadSensorManager origin=null
+              TYPE_ARG T: com.onepeloton.sensor.tread.TreadSensorManager
+              ARG calculation: BLOCK type=kotlin.Function0<com.onepeloton.sensor.tread.TreadSensorManager> origin=LAMBDA
+                COMPOSITE type=kotlin.Unit origin=null
+                FUNCTION_REFERENCE 'private final fun PelotonSolveItApp$lambda$3 ($context: android.content.Context, $observer: com.stewart.pelotonsolveit.PelotonTreadObserver): com.onepeloton.sensor.tread.TreadSensorManager declared in com.stewart.pelotonsolveit.MainActivityKt' type=kotlin.Function0<com.onepeloton.sensor.tread.TreadSensorManager> origin=INLINE_LAMBDA reflectionTarget=null
+                  ARG $context: GET_VAR 'val context: android.content.Context [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=android.content.Context origin=null
+                  ARG $observer: GET_VAR 'val observer: com.stewart.pelotonsolveit.PelotonTreadObserver [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=com.stewart.pelotonsolveit.PelotonTreadObserver origin=null
+          CALL 'public final fun LaunchedEffect (key1: kotlin.Any?, block: @[ExtensionFunctionType] kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope, kotlin.Unit>): kotlin.Unit declared in androidx.compose.runtime.EffectsKt' type=kotlin.Unit origin=null
+            ARG key1: GET_VAR 'val sensorManager: com.onepeloton.sensor.tread.TreadSensorManager [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=com.onepeloton.sensor.tread.TreadSensorManager origin=null
+            ARG block: CALL 'public final fun remember <T> (key1: kotlin.Any?, calculation: @[DisallowComposableCalls] kotlin.Function0<T of androidx.compose.runtime.ComposablesKt.remember>): T of androidx.compose.runtime.ComposablesKt.remember [inline] declared in androidx.compose.runtime.ComposablesKt' type=@[ExtensionFunctionType] kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope, kotlin.Unit> origin=androidx.compose.compiler.plugins.kotlin.lower.ComposeMemoizedLambdaOrigin@3e9e1d5f
+              TYPE_ARG T: @[ExtensionFunctionType] kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope, kotlin.Unit>
+              ARG key1: GET_VAR 'val sensorManager: com.onepeloton.sensor.tread.TreadSensorManager [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=com.onepeloton.sensor.tread.TreadSensorManager origin=null
+              ARG calculation: BLOCK type=kotlin.Function0<@[ExtensionFunctionType] kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope, kotlin.Unit>> origin=LAMBDA
+                COMPOSITE type=kotlin.Unit origin=null
+                FUNCTION_REFERENCE 'private final fun PelotonSolveItApp$lambda$4 ($sensorManager: com.onepeloton.sensor.tread.TreadSensorManager): @[ExtensionFunctionType] kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope, kotlin.Unit> declared in com.stewart.pelotonsolveit.MainActivityKt' type=kotlin.Function0<@[ExtensionFunctionType] kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope, kotlin.Unit>> origin=INLINE_LAMBDA reflectionTarget=null
+                  ARG $sensorManager: GET_VAR 'val sensorManager: com.onepeloton.sensor.tread.TreadSensorManager [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=com.onepeloton.sensor.tread.TreadSensorManager origin=null
+          CALL 'public final fun PelotonSolveItTheme (darkTheme: kotlin.Boolean, dynamicColor: kotlin.Boolean, content: kotlin.Function2<androidx.compose.runtime.Composer, kotlin.Int, kotlin.Unit>, $composer: androidx.compose.runtime.Composer?, $changed: kotlin.Int, $default: kotlin.Int): kotlin.Unit declared in com.stewart.pelotonsolveit.ui.theme.ThemeKt' type=kotlin.Unit origin=null
+            ARG darkTheme: COMPOSITE type=kotlin.Boolean origin=DEFAULT_VALUE
+              CONST Boolean type=kotlin.Boolean value=false
+            ARG dynamicColor: COMPOSITE type=kotlin.Boolean origin=DEFAULT_VALUE
+              CONST Boolean type=kotlin.Boolean value=false
+            ARG content: CALL 'public final fun rememberComposableLambda (key: kotlin.Int, tracked: kotlin.Boolean, block: kotlin.Any): androidx.compose.runtime.internal.ComposableLambda declared in androidx.compose.runtime.internal.ComposableLambdaKt' type=androidx.compose.runtime.internal.ComposableLambda origin=null
+              ARG key: CONST Int type=kotlin.Int value=1198312185
+              ARG tracked: CONST Boolean type=kotlin.Boolean value=true
+              ARG block: BLOCK type=kotlin.Function2<androidx.compose.runtime.Composer, kotlin.Int, kotlin.Unit> origin=LAMBDA
+                COMPOSITE type=kotlin.Unit origin=null
+                CALL 'public final fun <jvm-indy> <T> (dynamicCall: T of kotlin.jvm.internal.<jvm-indy>, bootstrapMethodHandle: kotlin.Any, vararg bootstrapMethodArguments: kotlin.Any): T of kotlin.jvm.internal.<jvm-indy> declared in kotlin.jvm.internal' type=kotlin.Function2<androidx.compose.runtime.Composer, kotlin.Int, kotlin.Unit> origin=null
+                  TYPE_ARG T: kotlin.Function2<androidx.compose.runtime.Composer, kotlin.Int, kotlin.Unit>
+                  ARG dynamicCall: CALL 'public final fun invoke (p0: androidx.activity.compose.ManagedActivityResultLauncher<kotlin.String, kotlin.Boolean>, p1: com.stewart.pelotonsolveit.PelotonTreadObserver): kotlin.Function2<androidx.compose.runtime.Composer, kotlin.Int, kotlin.Unit> declared in kotlin.jvm.internal.invokeDynamic' type=kotlin.Function2<androidx.compose.runtime.Composer, kotlin.Int, kotlin.Unit> origin=null
+                    ARG p0: GET_VAR 'val launcher: androidx.activity.compose.ManagedActivityResultLauncher<kotlin.String, kotlin.Boolean> [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=androidx.activity.compose.ManagedActivityResultLauncher<kotlin.String, kotlin.Boolean> origin=null
+                    ARG p1: GET_VAR 'val observer: com.stewart.pelotonsolveit.PelotonTreadObserver [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=com.stewart.pelotonsolveit.PelotonTreadObserver origin=null
+                  ARG bootstrapMethodHandle: CALL 'public final fun <jvm-method-handle> (tag: kotlin.Int, owner: kotlin.String, name: kotlin.String, descriptor: kotlin.String, isInterface: kotlin.Boolean): kotlin.Any declared in kotlin.jvm.internal' type=kotlin.Any origin=null
+                    ARG tag: CONST Int type=kotlin.Int value=6
+                    ARG owner: CONST String type=kotlin.String value="java/lang/invoke/LambdaMetafactory"
+                    ARG name: CONST String type=kotlin.String value="metafactory"
+                    ARG descriptor: CONST String type=kotlin.String value="(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"
+                    ARG isInterface: CONST Boolean type=kotlin.Boolean value=false
+                  ARG bootstrapMethodArguments: VARARG type=kotlin.Array<kotlin.Any> varargElementType=kotlin.Any
+                    CALL 'public final fun <jvm-original-method-type> (method: kotlin.Any): kotlin.Any declared in kotlin.jvm.internal' type=kotlin.Any origin=null
+                      ARG method: RAW_FUNCTION_REFERENCE 'public abstract fun invoke (p1: P1 of kotlin.Function2, p2: P2 of kotlin.Function2): R of kotlin.Function2 [operator] declared in kotlin.Function2' type=kotlin.Any
+                    RAW_FUNCTION_REFERENCE 'private final fun PelotonSolveItApp$lambda$9 ($launcher: androidx.activity.compose.ManagedActivityResultLauncher<kotlin.String, kotlin.Boolean>, $observer: com.stewart.pelotonsolveit.PelotonTreadObserver, $composer: androidx.compose.runtime.Composer?, $changed: kotlin.Int): kotlin.Unit? declared in com.stewart.pelotonsolveit.MainActivityKt' type=kotlin.Any
+                    CALL 'public final fun <jvm-original-method-type> (method: kotlin.Any): kotlin.Any declared in kotlin.jvm.internal' type=kotlin.Any origin=null
+                      ARG method: RAW_FUNCTION_REFERENCE 'public abstract fun invoke (p1: androidx.compose.runtime.Composer, p2: kotlin.Int?): kotlin.Unit? [fake_override,operator] declared in kotlin.jvm.internal.invokeDynamic.<fake>' type=kotlin.Any
+            ARG $composer: GET_VAR '$composer: androidx.compose.runtime.Composer? [assignable] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=androidx.compose.runtime.Composer? origin=null
+            ARG $changed: CONST Int type=kotlin.Int value=384
+            ARG $default: CONST Int type=kotlin.Int value=3
+          WHEN type=kotlin.Unit origin=IF
+            BRANCH
+              if: CALL 'public final fun isTraceInProgress (): kotlin.Boolean declared in androidx.compose.runtime.ComposerKt' type=kotlin.Boolean origin=null
+              then: CALL 'public final fun traceEventEnd (): kotlin.Unit declared in androidx.compose.runtime.ComposerKt' type=kotlin.Unit origin=null
+      BRANCH
+        if: CONST Boolean type=kotlin.Boolean value=true
+        then: CALL 'public abstract fun skipToGroupEnd (): kotlin.Unit declared in androidx.compose.runtime.Composer' type=kotlin.Unit origin=null
+          ARG <this>: GET_VAR '$composer: androidx.compose.runtime.Composer? [assignable] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=androidx.compose.runtime.Composer? origin=null
+    BLOCK type=kotlin.Unit origin=null
+      BLOCK type=kotlin.Unit origin=FOLDED_SAFE_CALL
+        WHEN type=kotlin.Unit origin=FOLDED_SAFE_CALL
+          BRANCH
+            if: COMPOSITE type=kotlin.Boolean origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_safe_receiver type:androidx.compose.runtime.ScopeUpdateScope? [val]
+                CALL 'public abstract fun endRestartGroup (): androidx.compose.runtime.ScopeUpdateScope? declared in androidx.compose.runtime.Composer' type=androidx.compose.runtime.ScopeUpdateScope? origin=null
+                  ARG <this>: GET_VAR '$composer: androidx.compose.runtime.Composer? [assignable] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=androidx.compose.runtime.Composer? origin=null
+              CALL 'public final fun not (): kotlin.Boolean [operator] declared in kotlin.Boolean' type=kotlin.Boolean origin=null
+                ARG <this>: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=null
+                  ARG arg0: GET_VAR 'val tmp0_safe_receiver: androidx.compose.runtime.ScopeUpdateScope? [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=androidx.compose.runtime.ScopeUpdateScope? origin=null
+                  ARG arg1: CONST Null type=kotlin.Nothing? value=null
+            then: CALL 'public abstract fun updateScope (block: kotlin.Function2<androidx.compose.runtime.Composer, kotlin.Int, kotlin.Unit>): kotlin.Unit declared in androidx.compose.runtime.ScopeUpdateScope' type=kotlin.Unit origin=null
+              ARG <this>: GET_VAR 'val tmp0_safe_receiver: androidx.compose.runtime.ScopeUpdateScope? [val] declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=androidx.compose.runtime.ScopeUpdateScope? origin=null
+              ARG block: BLOCK type=kotlin.Function2<androidx.compose.runtime.Composer?, kotlin.Int, kotlin.Unit> origin=LAMBDA
+                COMPOSITE type=kotlin.Unit origin=null
+                CALL 'public final fun <jvm-indy> <T> (dynamicCall: T of kotlin.jvm.internal.<jvm-indy>, bootstrapMethodHandle: kotlin.Any, vararg bootstrapMethodArguments: kotlin.Any): T of kotlin.jvm.internal.<jvm-indy> declared in kotlin.jvm.internal' type=kotlin.Function2<androidx.compose.runtime.Composer?, kotlin.Int, kotlin.Unit> origin=null
+                  TYPE_ARG T: kotlin.Function2<androidx.compose.runtime.Composer?, kotlin.Int, kotlin.Unit>
+                  ARG dynamicCall: CALL 'public final fun invoke (p0: kotlin.Int): kotlin.Function2<androidx.compose.runtime.Composer?, kotlin.Int, kotlin.Unit> declared in kotlin.jvm.internal.invokeDynamic' type=kotlin.Function2<androidx.compose.runtime.Composer?, kotlin.Int, kotlin.Unit> origin=null
+                    ARG p0: GET_VAR '$changed: kotlin.Int declared in com.stewart.pelotonsolveit.MainActivityKt.PelotonSolveItApp' type=kotlin.Int origin=null
+                  ARG bootstrapMethodHandle: CALL 'public final fun <jvm-method-handle> (tag: kotlin.Int, owner: kotlin.String, name: kotlin.String, descriptor: kotlin.String, isInterface: kotlin.Boolean): kotlin.Any declared in kotlin.jvm.internal' type=kotlin.Any origin=null
+                    ARG tag: CONST Int type=kotlin.Int value=6
+                    ARG owner: CONST String type=kotlin.String value="java/lang/invoke/LambdaMetafactory"
+                    ARG name: CONST String type=kotlin.String value="metafactory"
+                    ARG descriptor: CONST String type=kotlin.String value="(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"
+                    ARG isInterface: CONST Boolean type=kotlin.Boolean value=false
+                  ARG bootstrapMethodArguments: VARARG type=kotlin.Array<kotlin.Any> varargElementType=kotlin.Any
+                    CALL 'public final fun <jvm-original-method-type> (method: kotlin.Any): kotlin.Any declared in kotlin.jvm.internal' type=kotlin.Any origin=null
+                      ARG method: RAW_FUNCTION_REFERENCE 'public abstract fun invoke (p1: P1 of kotlin.Function2, p2: P2 of kotlin.Function2): R of kotlin.Function2 [operator] declared in kotlin.Function2' type=kotlin.Any
+                    RAW_FUNCTION_REFERENCE 'private final fun PelotonSolveItApp$lambda$10 ($$changed: kotlin.Int, $composer: androidx.compose.runtime.Composer?, $force: kotlin.Int): kotlin.Unit? declared in com.stewart.pelotonsolveit.MainActivityKt' type=kotlin.Any
+                    CALL 'public final fun <jvm-original-method-type> (method: kotlin.Any): kotlin.Any declared in kotlin.jvm.internal' type=kotlin.Any origin=null
+                      ARG method: RAW_FUNCTION_REFERENCE 'public abstract fun invoke (p1: androidx.compose.runtime.Composer?, p2: kotlin.Int?): kotlin.Unit? [fake_override,operator] declared in kotlin.jvm.internal.invokeDynamic.<fake>' type=kotlin.Any
+          BRANCH
+            if: CONST Boolean type=kotlin.Boolean value=true
+            then: CONST Null type=kotlin.Any? value=null
+
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate(FunctionCodegen.kt:50)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate$default(FunctionCodegen.kt:43)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethodNode(ClassCodegen.kt:422)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethod(ClassCodegen.kt:439)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generate(ClassCodegen.kt:164)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.generateFile(JvmIrCodegenFactory.kt:419)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.invokeCodegen(JvmIrCodegenFactory.kt:388)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.runCodegen$cli(KotlinToJVMBytecodeCompiler.kt:431)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:95)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:36)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:29)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:68)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:58)
+	at org.jetbrains.kotlin.config.phaser.NamedCompilerPhase.invoke(CompilerPhase.kt:102)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:22)
+	at org.jetbrains.kotlin.config.phaser.CompilerPhaseKt.invokeToplevel(CompilerPhase.kt:53)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.runPhasedPipeline(AbstractCliPipeline.kt:109)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.execute(AbstractCliPipeline.kt:68)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:78)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:44)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:90)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:352)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:175)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:38)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:504)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:421)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally$lambda$10$compile(IncrementalCompilerRunner.kt:254)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally(IncrementalCompilerRunner.kt:272)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:124)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:679)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:93)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1806)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Unknown Source)
+	at java.base/java.security.AccessController.doPrivileged(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(Unknown Source)
+	at java.base/java.security.AccessController.doPrivileged(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+Caused by: org.jetbrains.kotlin.codegen.CompilationException: Back-end (JVM) Internal error: Couldn't inline method call: CALL 'public final fun <get-current> (): T of androidx.compose.runtime.CompositionLocal [inline] declared in androidx.compose.runtime.CompositionLocal' type=android.content.Context origin=GET_PROPERTY
+Method: null
+File is unknown
+The root cause java.lang.IllegalStateException was thrown at: org.jetbrains.kotlin.codegen.inline.SourceCompilerForInlineKt.getMethodNode(SourceCompilerForInline.kt:129)
+	at org.jetbrains.kotlin.backend.jvm.codegen.IrInlineCodegen.genInlineCall(IrInlineCodegen.kt:82)
+	at org.jetbrains.kotlin.backend.jvm.codegen.IrInlineCallGenerator.genCall(IrInlineCallGenerator.kt:36)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitCall(ExpressionCodegen.kt:586)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitCall(ExpressionCodegen.kt:135)
+	at org.jetbrains.kotlin.ir.expressions.IrCall.accept(IrCall.kt:24)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitVariable(ExpressionCodegen.kt:725)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitVariable(ExpressionCodegen.kt:135)
+	at org.jetbrains.kotlin.ir.declarations.IrVariable.accept(IrVariable.kt:36)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitStatementContainer(ExpressionCodegen.kt:527)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitContainerExpression(ExpressionCodegen.kt:541)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitContainerExpression(ExpressionCodegen.kt:135)
+	at org.jetbrains.kotlin.ir.visitors.IrVisitor.visitBlock(IrVisitor.kt:122)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlock(ExpressionCodegen.kt:413)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlock(ExpressionCodegen.kt:135)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitWhen(ExpressionCodegen.kt:1049)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitWhen(ExpressionCodegen.kt:135)
+	at org.jetbrains.kotlin.ir.expressions.IrWhen.accept(IrWhen.kt:24)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitStatementContainer(ExpressionCodegen.kt:527)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlockBody(ExpressionCodegen.kt:532)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlockBody(ExpressionCodegen.kt:135)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.generate(ExpressionCodegen.kt:233)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.doGenerate(FunctionCodegen.kt:126)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate(FunctionCodegen.kt:47)
+	... 46 more
+Caused by: java.lang.IllegalStateException: couldn't find inline method Landroidx/compose/runtime/CompositionLocal;.getCurrent()Ljava/lang/Object;
+	at org.jetbrains.kotlin.codegen.inline.SourceCompilerForInlineKt.getMethodNode(SourceCompilerForInline.kt:129)
+	at org.jetbrains.kotlin.codegen.inline.SourceCompilerForInlineKt.loadCompiledInlineFunction$lambda$2(SourceCompilerForInline.kt:98)
+	at org.jetbrains.kotlin.codegen.inline.InlineCache.computeMethodBytes(InlineCache.kt:90)
+	at org.jetbrains.kotlin.codegen.inline.SourceCompilerForInlineKt.loadCompiledInlineFunction(SourceCompilerForInline.kt:93)
+	at org.jetbrains.kotlin.backend.jvm.codegen.IrSourceCompilerForInline.compileInlineFunction(IrSourceCompilerForInline.kt:96)
+	at org.jetbrains.kotlin.backend.jvm.codegen.IrInlineCodegen.genInlineCall(IrInlineCodegen.kt:65)
+	... 70 more
+
+
