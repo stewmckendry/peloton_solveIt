@@ -47,6 +47,8 @@ android {
         buildConfigField("String", "SOLVEIT_TOKEN", "\"${localProps["SOLVEIT_TOKEN"]}\"")
         buildConfigField("String", "SOLVEIT_URL", "\"${localProps["SOLVEIT_URL"]}\"")
         buildConfigField("String", "SOLVEIT_DIALOG", "\"${localProps["SOLVEIT_DIALOG"]}\"")
+        buildConfigField("String", "OPENAI_API_KEY", "\"${localProps["OPENAI_API_KEY"]}\"")
+
     }
 }
 
@@ -71,4 +73,5 @@ dependencies {
     implementation("com.alphacephei:vosk-android:0.3.75")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation(files("libs/peloton-sensor.jar"))
+    implementation("com.github.gkonovalov.android-vad:silero:2.0.10")
 }

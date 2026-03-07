@@ -64,7 +64,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun PelotonSolveItApp() {
     val context = LocalContext.current
-    val model = loadVoskModel(context)
     val bridge = SolveItJSBridge()
     var webView: WebView? = null
     var isDarkMode by remember { mutableStateOf(true) }
