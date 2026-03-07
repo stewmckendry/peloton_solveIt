@@ -30,7 +30,6 @@ class PelotonTreadObserver : TreadSensorObserver {
         speedToPace()
         val currentTime = System.currentTimeMillis()
         time_dlt = currentTime - lastUpdateTime
-        Log.d("PelotonSolveIt", "sensor update: speed=$speed pace=$pace time_dlt=${time_dlt}ms distance=$distance")
         lastUpdateTime = currentTime
         if(workoutState == WorkoutState.RUNNING) {
             distance += speed * MPH_TO_KMH * time_dlt / MS_PER_HOUR

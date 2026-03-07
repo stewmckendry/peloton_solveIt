@@ -121,9 +121,15 @@ fun PelotonSolveItApp() {
                 onPageFinished = {
                     Thread {
                         try {
-                            Thread.sleep(1000L)
-                            sendToSolveIt("Hello from Peloton!  I am starting my run session on the Peloton while reading this dialog in SolveIt - learning + running my favourite!  I will be asking sending you messages as I run!",
-                                bridge, pin = true, placement = "at_end")
+                            Thread.sleep(3000L)
+                            val greeting = """
+                                Hello from Peloton! I'm starting a run session and will be reading and interacting with this dialog hands-free while I run. 
+                                I'll be sending messages by voice, so please keep responses concise and easy to read.
+                                I can't write or run code myself right now, but I love seeing it and understanding how it works. 
+                                If it would help to add a note or code cell to the dialog, please go ahead and do so — I can only send prompt messages by voice, so I'm relying on you to add and run code or notes on my behalf where it makes sense.
+                                I learn best in small steps — please explain things clearly, check my understanding often, and don't move on until I confirm I've got it!"
+                            """.trimIndent()
+                            sendToSolveIt(greeting, bridge, pin = true, placement = "at_end")
                         } catch (e: Exception) {
                             Log.e("PelotonSolveIt", "Error: ${e.message}", e)
                         }
@@ -143,7 +149,7 @@ fun startListening(model: Model, onResult: (String) -> Unit) {
         AudioFormat.ENCODING_PCM_16BIT)
     try {
         val audio = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
+            MediaRecorder.AudioSource.VOICE_RECOGNITION,
             16000,
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
