@@ -18,11 +18,13 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import org.json.JSONObject
+import java.io.Closeable
 import java.io.DataOutputStream
 import java.io.File
 
 @SuppressLint("MissingPermission")
-class WhisperSpeechEngine(private val context: Context, private val openai_api_key: String) : SpeechEngine {
+class WhisperSpeechEngine(private val context: Context, private val openai_api_key: String) : SpeechEngine,
+    Closeable {
     private val vad = VadSilero(
         context,
         sampleRate = SampleRate.SAMPLE_RATE_16K,
@@ -82,8 +84,11 @@ class WhisperSpeechEngine(private val context: Context, private val openai_api_k
         }  finally {
             audio.stop()
             audio.release()
-            vad.close()
         }
+    }
+
+    override fun close() {
+        vad.close()
     }
 }
 
