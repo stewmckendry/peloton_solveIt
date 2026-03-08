@@ -161,7 +161,7 @@ fun startListening(isWhisper: Boolean, whisperer: WhisperSpeechEngine,
         transcript = vosker.listen() ?: return
     }
     Log.d("PelotonSolveIt", "Transcript: $transcript")
-    if (transcript.isBlank()) Log.w("PelotonSolveIt", "Warning: empty transcript returned")
+    if (transcript.isBlank()) Log.w("VoskSpeechEngine", "Warning: empty transcript returned")
     onResult(transcript)
 }
 

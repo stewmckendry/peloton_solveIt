@@ -74,4 +74,5 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation(files("libs/peloton-sensor.jar"))
     implementation(files("libs/android-vad-silero-v2.0.10-release.aar"))
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.17.0")
 }
