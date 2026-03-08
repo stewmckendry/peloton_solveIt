@@ -54,3 +54,23 @@ fun sendToSolveIt(msg: String, bridge: SolveItJSBridge, pin: Boolean = false, pl
     }
 }
 
+fun greetingExists(bridge: SolveItJSBridge) : Boolean {
+    val dlgName = bridge.dlgName
+    if( dlgName.isEmpty()) {
+        Log.d("PelotonSolveIt", "Greeting Check Skipped - no dlgName ($dlgName) found")
+        return false
+    }
+    val re_pattern = "Hello from Peloton"
+    val params = mutableMapOf(
+        "dlg_name" to dlgName,
+        "re_pattern" to re_pattern
+    )
+    val checkMsgResult = solveItPost(
+        "find_msgs_",
+        params)
+    val json = JSONObject(checkMsgResult)
+    val msgs = json.getJSONArray("msgs")
+    Log.d("PelotonSolveIt", "Greeting check: found ${msgs.length()} matching messages")
+    return msgs.length() > 0
+}
+

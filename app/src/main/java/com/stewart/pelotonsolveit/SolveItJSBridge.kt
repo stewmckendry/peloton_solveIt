@@ -1,5 +1,6 @@
 package com.stewart.pelotonsolveit
 
+import android.util.Log
 import android.webkit.JavascriptInterface
 
 class SolveItJSBridge {
@@ -8,8 +9,13 @@ class SolveItJSBridge {
 
     @JavascriptInterface
     fun setFocusedMessage(dlgName: String?, msgId: String?) {
-        this.dlgName = dlgName ?: ""
-        this.msgId = msgId ?: ""
+        val newDlgName = dlgName ?: ""
+        val newMsgId = msgId ?: ""
+        if (newDlgName != this.dlgName || newMsgId != this.msgId) {
+            Log.d("SolveItJSBridge", "dialog name: $newDlgName, msgID: $newMsgId")
+            this.dlgName = newDlgName
+            this.msgId = newMsgId
+        }
     }
 
 }
