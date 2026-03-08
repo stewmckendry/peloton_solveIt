@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.rememberLauncherForActivityResult
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -40,6 +41,8 @@ import androidx.webkit.WebViewFeature
 import org.vosk.Model
 import org.vosk.Recognizer
 import com.onepeloton.sensor.tread.TreadSensorManager
+import com.stewart.pelotonsolveit.speech.VoskSpeechEngine
+import com.stewart.pelotonsolveit.speech.WhisperSpeechEngine
 import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
@@ -67,17 +70,20 @@ fun PelotonSolveItApp() {
     val bridge = SolveItJSBridge()
     var webView: WebView? = null
     var isDarkMode by remember { mutableStateOf(true) }
+    var isWhisper by remember { mutableStateOf(value=true)}
+    var whisperer = remember {  WhisperSpeechEngine(context, BuildConfig.OPENAI_API_KEY) }
+    var vosker = remember { VoskSpeechEngine(context) }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             @SuppressLint("MissingPermission")
             Thread {
-                startListening(model) { transcript ->
+                startListening(isWhisper, whisperer, vosker) { transcript ->
                     Log.d("PelotonSolveIt", "Transcript: $transcript")
                     Thread {
                         try {
-                            sendToSolveIt(transcript, bridge)
+                            sendToSolveIt("[From the Peloton:]" + transcript, bridge)
                         } catch (e: Exception) {
                             Log.e("PelotonSolveIt", "Error: ${e.message}", e)
                         }
@@ -107,7 +113,10 @@ fun PelotonSolveItApp() {
                             webView?.evaluateJavascript("document.documentElement.classList.remove('dark')", null)
                         else
                             webView?.evaluateJavascript("document.documentElement.classList.add('dark')", null)
-                        isDarkMode = !isDarkMode
+                        isDarkMode = !isDarkMode },
+                    isWhisper, onToggleSpeechMode = {
+                        isWhisper = !isWhisper
+                        Log.d("PelotonSolveIt", "Speech mode: ${if (isWhisper) "Whisper" else "Vosk"}")
                     })
             },
             bottomBar = {
@@ -141,31 +150,19 @@ fun PelotonSolveItApp() {
 
 @RequiresPermission(Manifest.permission.RECORD_AUDIO)
 @SuppressLint("MissingPermission")
-fun startListening(model: Model, onResult: (String) -> Unit) {
-    val recognizer = Recognizer(model, 16000f)
-    val bufferSize = AudioRecord.getMinBufferSize(16000,
-        AudioFormat.CHANNEL_IN_MONO,
-        AudioFormat.ENCODING_PCM_16BIT)
-    try {
-        val audio = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_RECOGNITION,
-            16000,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            bufferSize
-        )
-        val buffer = ByteArray(bufferSize)
-        audio.startRecording()
-        while (audio.read(buffer, 0, bufferSize) > 0) {
-            if (recognizer.acceptWaveForm(buffer, bufferSize)) break
-        }
-        val json = JSONObject(recognizer.result)
-        val text = json.getString("text")
-        onResult(text)
-    } catch (e: SecurityException) {
-    Log.d("PelotonSolveIt", "Mic permission denied: $e")
-    return
+fun startListening(isWhisper: Boolean, whisperer: WhisperSpeechEngine,
+                   vosker: VoskSpeechEngine, onResult: (String) -> Unit) {
+    Log.d("PelotonSolveIt", "startListening: engine=${if (isWhisper) "Whisper" else "Vosk"}")
+    val transcript: String
+    if( isWhisper ) {
+        transcript = whisperer.listen() ?: return
     }
+    else {
+        transcript = vosker.listen() ?: return
+    }
+    Log.d("PelotonSolveIt", "Transcript: $transcript")
+    if (transcript.isBlank()) Log.w("PelotonSolveIt", "Warning: empty transcript returned")
+    onResult(transcript)
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)

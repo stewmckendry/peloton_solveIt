@@ -123,3 +123,10 @@ fun BrightButton(isDarkMode: Boolean, onToggleDarkMode: () -> Unit) {
         Text(if (isDarkMode) "☀️" else "🌙")
     }
 }
+
+@Composable
+fun SpeechModeButton(isWhisper: Boolean, onToggleSpeechMode: () -> Unit) {
+    IconButton(onClick = { onToggleSpeechMode() }) {
+        Text(if (isWhisper) "☁️" else "📱")
+    }
+}

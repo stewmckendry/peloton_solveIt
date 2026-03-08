@@ -19,11 +19,14 @@ fun TopBar(observer: PelotonTreadObserver,
            webView: WebView?,
            onMicClick: () -> Unit,
            isDarkMode: Boolean,
-           onToggleDarkMode: () -> Unit) {
+           onToggleDarkMode: () -> Unit,
+           isWhisper: Boolean,
+           onToggleSpeechMode: () -> Unit) {
     Surface(modifier = Modifier.fillMaxWidth(), color = BarBackground) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Spacer(modifier = Modifier.weight(1f))
+            SpeechModeButton(isWhisper, onToggleSpeechMode = onToggleSpeechMode)
             MicButton(onMicClick = onMicClick)
             WorkoutButtons(observer = observer)
             BrightButton(isDarkMode, onToggleDarkMode = onToggleDarkMode)

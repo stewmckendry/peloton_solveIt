@@ -73,5 +73,5 @@ dependencies {
     implementation("com.alphacephei:vosk-android:0.3.75")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation(files("libs/peloton-sensor.jar"))
-    implementation("com.github.gkonovalov.android-vad:silero:2.0.10")
+    implementation(files("libs/android-vad-silero-v2.0.10-release.aar"))
 }

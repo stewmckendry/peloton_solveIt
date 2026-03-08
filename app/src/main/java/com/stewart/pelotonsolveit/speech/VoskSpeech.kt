@@ -31,12 +31,18 @@ class VoskSpeechEngine(private val context: Context) : SpeechEngine {
         try {
             audio.startRecording()
             while (audio.read(buffer, 0, bufferSize) > 0) {
-                if (recognizer.acceptWaveForm(buffer, bufferSize)) break
+                if (recognizer.acceptWaveForm(buffer, bufferSize)) {
+                    Log.d("VoskSpeechEngine", "End of utterance detected")
+                    break
+                }
             }
             val json = JSONObject(recognizer.result)
             return json.getString("text")
         } catch (e: SecurityException) {
-            Log.d("PelotonSolveIt", "Mic permission denied: $e")
+            Log.e("VoskSpeechEngine", "Mic permission denied", e)
+            return null
+        } catch (e: Exception) {
+            Log.e("VoskSpeechEngine", "Unexpected error during listen", e)
             return null
         } finally {
             audio.stop()
