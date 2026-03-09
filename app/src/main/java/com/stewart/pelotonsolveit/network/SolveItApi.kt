@@ -56,6 +56,7 @@ fun sendToSolveIt(msg: String, bridge: SolveItJSBridge, pin: Boolean = false, pl
 
 fun greetingExists(bridge: SolveItJSBridge) : Boolean {
     val dlgName = bridge.dlgName
+    Log.d("PelotonSolveIt", "Greeting Check on dlgName: $dlgName")
     if( dlgName.isEmpty()) {
         Log.d("PelotonSolveIt", "Greeting Check Skipped - no dlgName ($dlgName) found")
         return false

@@ -17,6 +17,7 @@ import com.stewart.pelotonsolveit.ui.theme.BarBackground
 @Composable
 fun TopBar(observer: PelotonTreadObserver,
            webView: WebView?,
+           micOn: Boolean,
            onMicClick: () -> Unit,
            isDarkMode: Boolean,
            onToggleDarkMode: () -> Unit,
@@ -27,7 +28,7 @@ fun TopBar(observer: PelotonTreadObserver,
             verticalAlignment = Alignment.CenterVertically) {
             Spacer(modifier = Modifier.weight(1f))
             SpeechModeButton(isWhisper, onToggleSpeechMode = onToggleSpeechMode)
-            MicButton(onMicClick = onMicClick)
+            MicButton(micOn, onMicClick = onMicClick)
             WorkoutButtons(observer = observer)
             BrightButton(isDarkMode, onToggleDarkMode = onToggleDarkMode)
         }

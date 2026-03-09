@@ -1,5 +1,10 @@
 package com.stewart.pelotonsolveit
 
+import android.media.audiofx.AudioEffect
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,11 +19,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.runtime.getValue
 import com.stewart.pelotonsolveit.ui.theme.AccentBlue
 import com.stewart.pelotonsolveit.ui.theme.ButtonSurface
+import com.stewart.pelotonsolveit.ui.theme.DestructiveRed
 import com.stewart.pelotonsolveit.ui.theme.ItemSurface
 import com.stewart.pelotonsolveit.ui.theme.LabelText
 import com.stewart.pelotonsolveit.ui.theme.ValueText
@@ -45,10 +54,20 @@ fun ItemBox(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun MicButton(onMicClick: () -> Unit) {
+fun MicButton(micOn: Boolean, onMicClick: () -> Unit) {
+    val color = if( micOn ) DestructiveRed else AccentBlue
+    val alpha by animateFloatAsState(
+        targetValue = if (micOn) 0.3f else 1f,
+        animationSpec = if (micOn) infiniteRepeatable(
+            animation = tween(600),
+            repeatMode = RepeatMode.Reverse
+        ) else tween(300),
+        label = "micAlpha"
+    )
     Button(
+        modifier = Modifier.graphicsLayer { this.alpha = alpha },
         onClick = onMicClick,
-        colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)) {
+        colors = ButtonDefaults.buttonColors(containerColor = color)) {
         Text("Ask solveit 🎤")
     }
 }

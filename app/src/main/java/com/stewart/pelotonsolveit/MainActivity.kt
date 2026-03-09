@@ -73,8 +73,10 @@ fun PelotonSolveItApp() {
     var webView: WebView? = null
     var isDarkMode by remember { mutableStateOf(true) }
     var isWhisper by remember { mutableStateOf(value=true)}
+    var micOn by remember { mutableStateOf(value=false)}
     var whisperer = remember {  WhisperSpeechEngine(context, BuildConfig.OPENAI_API_KEY) }
     var vosker = remember { VoskSpeechEngine(context) }
+    var greetedDialogs = remember {  mutableSetOf<String>() }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -83,6 +85,10 @@ fun PelotonSolveItApp() {
             Thread {
                 startListening(isWhisper, whisperer, vosker) { transcript ->
                     Log.d("PelotonSolveIt", "Transcript: $transcript")
+                    Handler(Looper.getMainLooper()).post {
+                        micOn = false
+                        Log.d("PelotonSolveIt", "micOn set to false")
+                    }
                     Thread {
                         try {
                             sendToSolveIt("[From the Peloton] " + transcript, bridge)
@@ -103,20 +109,27 @@ fun PelotonSolveItApp() {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                TopBar(observer, webView, onMicClick = {
-                    launcher.launch(Manifest.permission.RECORD_AUDIO)
-                    webView?.evaluateJavascript(
-                        "Android.setFocusedMessage(\n" +
-                                "    new URLSearchParams(window.location.search).get('name'),\n" +
-                                "    document.querySelector('[data-sm=\"primary\"]')?.id\n" +
+                TopBar(
+                    observer = observer,
+                    webView = webView,
+                    micOn = micOn,
+                    onMicClick = {
+                        micOn = true
+                        launcher.launch(Manifest.permission.RECORD_AUDIO)
+                        webView?.evaluateJavascript(
+                            "Android.setFocusedMessage(\n" +
+                                    "    new URLSearchParams(window.location.search).get('name'),\n" +
+                                    "    document.querySelector('[data-sm=\"primary\"]')?.id\n" +
                                 ")\n", null) },
-                    isDarkMode, onToggleDarkMode = {
+                    isDarkMode= isDarkMode,
+                    onToggleDarkMode = {
                         if (isDarkMode)
                             webView?.evaluateJavascript("document.documentElement.classList.remove('dark')", null)
                         else
                             webView?.evaluateJavascript("document.documentElement.classList.add('dark')", null)
                         isDarkMode = !isDarkMode },
-                    isWhisper, onToggleSpeechMode = {
+                    isWhisper = isWhisper,
+                    onToggleSpeechMode = {
                         isWhisper = !isWhisper
                         Log.d("PelotonSolveIt", "Speech mode: ${if (isWhisper) "Whisper" else "Vosk"}")
                     })
@@ -127,26 +140,7 @@ fun PelotonSolveItApp() {
         ) { innerPadding ->
             SolveItWebView(
                 modifier = Modifier.padding(innerPadding).fillMaxSize(),
-                bridge, onWebViewCreated = { wv -> webView = wv },
-                onPageFinished = {
-                    Thread {
-                        try {
-                            Thread.sleep(1000L)
-                            if( !greetingExists(bridge) ) {
-                                val greeting = """
-                                    Hello from Peloton! I'm starting a run session and will be reading and interacting with this dialog hands-free while I run. 
-                                    I'll be sending messages by voice, so please keep responses concise and easy to read.
-                                    I can't write or run code myself right now, but I love seeing it and understanding how it works. 
-                                    If it would help to add a note or code cell to the dialog, please go ahead and do so — I can only send prompt messages by voice, so I'm relying on you to add and run code or notes on my behalf where it makes sense.
-                                    I learn best in small steps — please explain things clearly, check my understanding often, and don't move on until I confirm I've got it!"
-                                """.trimIndent()
-                                sendToSolveIt(greeting, bridge, pin = true, placement = "at_end")
-                            }
-                        } catch (e: Exception) {
-                            Log.e("PelotonSolveIt", "Error: ${e.message}", e)
-                        }
-                    }.start()
-                }
+                bridge, greetedDialogs, onWebViewCreated = { wv -> webView = wv }
             )
         }
     }
@@ -171,7 +165,7 @@ fun startListening(isWhisper: Boolean, whisperer: WhisperSpeechEngine,
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, onWebViewCreated: (WebView) -> Unit, onPageFinished: () -> Unit) {
+fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, greetedDialogs: MutableSet<String>, onWebViewCreated: (WebView) -> Unit) {
     AndroidView(
         modifier = modifier,
         factory = { context ->
@@ -188,30 +182,55 @@ fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, onWeb
                 WebSettingsCompat.setForceDark(settings, WebSettingsCompat.FORCE_DARK_ON)
                 addJavascriptInterface(bridge, "Android")
                 loadUrl("https://solve.it.com")
+                val handler = Handler(Looper.getMainLooper())  // moved outside onPageFinished
+                val pollRunnable = object : Runnable {
+                    override fun run() {
+                        evaluateJavascript(
+                            "Android.setFocusedMessage(\n" +
+                                    "    new URLSearchParams(window.location.search).get('name'),\n" +
+                                    "    document.querySelector('[data-sm=\"primary\"]')?.id\n" +
+                                    ")\n", null
+                        )
+                        if (bridge.dlgName.isNotEmpty() && !greetedDialogs.contains(bridge.dlgName)) {
+                            val dlgName = bridge.dlgName  // capture before thread
+                            Thread {
+                                try {
+                                    Log.d("SolveItWebApp", "Checking greeting for $dlgName")
+                                    greetedDialogs.add(dlgName)  // mark as greeted whether greeting existed or not
+                                    if (!greetingExists(bridge)) {
+                                        Log.d("SolveItWebApp", "No greeting found — sending")
+                                        val greeting = """
+                                            Hello from Peloton! I'm starting a run session and will be reading and interacting with this dialog hands-free while I run. 
+                                            I'll be sending messages by voice, so please keep responses concise and easy to read.
+                                            I can't write or run code myself right now, but I love seeing it and understanding how it works. 
+                                            If it would help to add a note or code cell to the dialog, please go ahead and do so — I can only send prompt messages by voice, so I'm relying on you to add and run code or notes on my behalf where it makes sense.
+                                            I learn best in small steps — please explain things clearly, check my understanding often, and don't move on until I confirm I've got it!"
+                                        """.trimIndent()
+                                        sendToSolveIt(greeting, bridge, pin = true, placement = "at_end")
+                                        handler.post { reload() }
+                                    }
+                                    Log.d("SolveItWebView", "Greeted dialogs: $greetedDialogs")
+                                } catch (e: Exception) {
+                                    Log.e("PelotonSolveIt", "Error: ${e.message}", e)
+                                }
+                            }.start()
+                        }
+                        handler.postDelayed(this, 500)
+                    }
+                }
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String) {
-                        view.evaluateJavascript("document.getElementById('dialog-container').style.height = '100%';\n" +
-                                "document.getElementById('dialog-container').style.minHeight = window.innerHeight + 'px';\n", null)
+                        Log.d("SolveItWebView", "onPageFinished: $url")
+                        view.evaluateJavascript(
+                            "document.getElementById('dialog-container').style.height = '100%';\n" +
+                                    "document.getElementById('dialog-container').style.minHeight = window.innerHeight + 'px';\n",
+                            null
+                        )
                         view.postDelayed({
-                            view.evaluateJavascript("Android.setFocusedMessage(\n" +
-                                    "    new URLSearchParams(window.location.search).get('name'),\n" +
-                                    "    document.querySelector('.editable.ring-2')?.id\n" +
-                                    ")\n", null)
                             view.evaluateJavascript("document.documentElement.classList.add('dark')", null)
-                            onPageFinished()
                         }, 500)
-                        val handler =Handler(Looper.getMainLooper())
-                        val pollRunnable = object : Runnable {
-                            override fun run() {
-                                view.evaluateJavascript(
-                                    "Android.setFocusedMessage(\n" +
-                                            "    new URLSearchParams(window.location.search).get('name'),\n" +
-                                            "    document.querySelector('[data-sm=\"primary\"]')?.id\n" +
-                                            ")\n", null)
-                                handler.postDelayed(this, 500)
-                            }
-                        }
-                        handler.post(pollRunnable)
+                        handler.removeCallbacksAndMessages(null)  // cancel any previous loop
+                        handler.post(pollRunnable)  // start fresh
                     }
                     override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                         Log.e("PelotonSolveIt", "WebView error: ${error.description} for ${request.url} (is WS: ${request.url.toString().startsWith("ws")})")
@@ -220,5 +239,6 @@ fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, onWeb
             }.also { onWebViewCreated(it) }
         })
 }
+
 
 
