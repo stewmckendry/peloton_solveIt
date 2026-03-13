@@ -16,3 +16,5 @@ local.properties
 app/src/main/assets/
 *.apk
 *.keystore
+app/libs/*.jar
+app/libs/*.aar
