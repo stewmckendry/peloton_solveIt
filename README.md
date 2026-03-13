@@ -2,6 +2,8 @@
 
 An Android app that turns your Peloton Tread into a hands-free AI workstation. Run [SolveIt](https://solveit.fast.ai) while training — speak prompts via voice, get AI responses live in the app, and track your workout stats in real time. No Google services required.
 
+> **⚠️ Disclaimer:** This is a personal project. It uses a library reverse-engineered from Peloton's system software. Use at your own risk. Not affiliated with or endorsed by Peloton. Intended for personal use only.
+
 ---
 
 ## What It Does
