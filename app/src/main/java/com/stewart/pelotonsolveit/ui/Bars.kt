@@ -22,10 +22,15 @@ fun TopBar(observer: PelotonTreadObserver,
            isDarkMode: Boolean,
            onToggleDarkMode: () -> Unit,
            isWhisper: Boolean,
-           onToggleSpeechMode: () -> Unit) {
+           onToggleSpeechMode: () -> Unit,
+           canGoFwd: Boolean,
+           onFwdClick: () -> Unit,
+           canGoBack: Boolean,
+           onBackClick: () -> Unit){
     Surface(modifier = Modifier.fillMaxWidth(), color = BarBackground) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically) {
+            NavButtons(canGoBack, canGoFwd, onBackClick, onFwdClick)
             Spacer(modifier = Modifier.weight(1f))
             SpeechModeButton(isWhisper, onToggleSpeechMode = onToggleSpeechMode)
             MicButton(micOn, onMicClick = onMicClick)

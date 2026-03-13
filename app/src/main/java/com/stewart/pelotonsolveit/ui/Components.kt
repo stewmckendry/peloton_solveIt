@@ -73,6 +73,22 @@ fun MicButton(micOn: Boolean, onMicClick: () -> Unit) {
 }
 
 @Composable
+fun NavButtons(canGoBack: Boolean, canGoFwd: Boolean, onBackClick: () -> Unit, onFwdClick: () -> Unit) {
+    Row() {
+        Button(
+            onClick = onBackClick,
+            enabled = canGoBack) {
+            Text("◀️")
+        }
+        Button(
+            onClick = onFwdClick,
+            enabled = canGoFwd) {
+            Text("▶️")
+        }
+    }
+}
+
+@Composable
 fun WorkoutButtons(observer: PelotonTreadObserver) {
     if( observer.workoutState == WorkoutState.IDLE) {
         Button(

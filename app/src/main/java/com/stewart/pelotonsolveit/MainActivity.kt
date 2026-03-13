@@ -77,6 +77,8 @@ fun PelotonSolveItApp() {
     var whisperer = remember {  WhisperSpeechEngine(context, BuildConfig.OPENAI_API_KEY) }
     var vosker = remember { VoskSpeechEngine(context) }
     var greetedDialogs = remember {  mutableSetOf<String>() }
+    var canGoBack by remember { mutableStateOf(false) }
+    var canGoForward by remember { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -132,15 +134,28 @@ fun PelotonSolveItApp() {
                     onToggleSpeechMode = {
                         isWhisper = !isWhisper
                         Log.d("PelotonSolveIt", "Speech mode: ${if (isWhisper) "Whisper" else "Vosk"}")
-                    })
+                    },
+                    canGoForward,
+                    onFwdClick = {
+                        if( canGoForward ) webView?.goForward()
+                    },
+                    canGoBack,
+                    onBackClick = {
+                        if( canGoBack ) webView?.goBack()
+                    }
+                    )
             },
             bottomBar = {
                 BottomBar(observer)
             }
         ) { innerPadding ->
             SolveItWebView(
-                modifier = Modifier.padding(innerPadding).fillMaxSize(),
-                bridge, greetedDialogs, onWebViewCreated = { wv -> webView = wv }
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                bridge, greetedDialogs, onWebViewCreated = { wv -> webView = wv },
+                onCanGoBackChanged = { canGoBack = it },
+                onCanGoForwardChanged = { canGoForward = it }
             )
         }
     }
@@ -165,7 +180,10 @@ fun startListening(isWhisper: Boolean, whisperer: WhisperSpeechEngine,
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, greetedDialogs: MutableSet<String>, onWebViewCreated: (WebView) -> Unit) {
+fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge,
+                   greetedDialogs: MutableSet<String>, onWebViewCreated: (WebView) -> Unit,
+                   onCanGoBackChanged: (Boolean) -> Unit,
+                   onCanGoForwardChanged: (Boolean) -> Unit) {
     AndroidView(
         modifier = modifier,
         factory = { context ->
@@ -231,6 +249,8 @@ fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge, greet
                         }, 500)
                         handler.removeCallbacksAndMessages(null)  // cancel any previous loop
                         handler.post(pollRunnable)  // start fresh
+                        onCanGoBackChanged(view.canGoBack())
+                        onCanGoForwardChanged(view.canGoForward())
                     }
                     override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                         Log.e("PelotonSolveIt", "WebView error: ${error.description} for ${request.url} (is WS: ${request.url.toString().startsWith("ws")})")
