@@ -1,18 +1,21 @@
 package com.stewart.pelotonsolveit.speech.realtime
 
 import android.content.Context
+import android.media.MediaRecorder
 import org.json.JSONObject
+import org.webrtc.AudioSource
+import org.webrtc.AudioTrack
 import org.webrtc.DataChannel
 import org.webrtc.IceCandidate
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
-import org.webrtc.MediaStreamTrack
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.RtpReceiver
 import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
+import org.webrtc.audio.JavaAudioDeviceModule
 import java.io.Closeable
 import java.nio.ByteBuffer
 import kotlin.coroutines.resume
@@ -20,25 +23,28 @@ import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
- * Connection-only probe for validating OpenAI Realtime WebRTC signaling.
+ * Minimal bidirectional OpenAI Realtime audio session.
  *
- * It creates an audio transceiver without attaching a microphone track. Full
- * audio capture and playback will be added only after this handshake is proven.
+ * WebRTC captures and sends the local microphone track and automatically plays
+ * the remote audio track through Android's active audio output.
  */
-class RealtimeConnectionProbe(
+class RealtimeAudioSession(
     context: Context,
     private val negotiator: RealtimeSessionNegotiator,
     private val onStatus: (String) -> Unit
 ) : Closeable {
     private val applicationContext = context.applicationContext
+    private var audioDeviceModule: JavaAudioDeviceModule? = null
+    private var audioSource: AudioSource? = null
+    private var localAudioTrack: AudioTrack? = null
     private var peerConnectionFactory: PeerConnectionFactory? = null
     private var peerConnection: PeerConnection? = null
     private var dataChannel: DataChannel? = null
+    private var initialGreetingSent = false
 
     suspend fun connect(config: RealtimeSessionConfig = RealtimeSessionConfig()) {
-        closeConnection()
-        peerConnectionFactory?.dispose()
-        peerConnectionFactory = null
+        close()
+        initialGreetingSent = false
         report("Initializing WebRTC")
 
         PeerConnectionFactory.initialize(
@@ -46,7 +52,20 @@ class RealtimeConnectionProbe(
                 .builder(applicationContext)
                 .createInitializationOptions()
         )
-        val factory = PeerConnectionFactory.builder().createPeerConnectionFactory()
+        val audioModule = JavaAudioDeviceModule.builder(applicationContext)
+            .setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
+            .setUseHardwareAcousticEchoCanceler(
+                JavaAudioDeviceModule.isBuiltInAcousticEchoCancelerSupported()
+            )
+            .setUseHardwareNoiseSuppressor(
+                JavaAudioDeviceModule.isBuiltInNoiseSuppressorSupported()
+            )
+            .createAudioDeviceModule()
+        audioDeviceModule = audioModule
+
+        val factory = PeerConnectionFactory.builder()
+            .setAudioDeviceModule(audioModule)
+            .createPeerConnectionFactory()
         peerConnectionFactory = factory
 
         val connection = factory.createPeerConnection(
@@ -55,12 +74,13 @@ class RealtimeConnectionProbe(
         ) ?: throw RealtimeConnectionException("Unable to create WebRTC peer connection")
         peerConnection = connection
 
-        connection.addTransceiver(
-            MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO,
-            RtpTransceiver.RtpTransceiverInit(
-                RtpTransceiver.RtpTransceiverDirection.SEND_RECV
-            )
-        )
+        val source = factory.createAudioSource(MediaConstraints())
+        audioSource = source
+        val microphoneTrack = factory.createAudioTrack(LOCAL_AUDIO_TRACK_ID, source)
+        microphoneTrack.setEnabled(true)
+        localAudioTrack = microphoneTrack
+        connection.addTrack(microphoneTrack, listOf(LOCAL_MEDIA_STREAM_ID))
+
         dataChannel = connection.createDataChannel(
             OPENAI_EVENTS_CHANNEL,
             DataChannel.Init()
@@ -83,9 +103,15 @@ class RealtimeConnectionProbe(
 
     override fun close() {
         closeConnection()
+        localAudioTrack?.setEnabled(false)
+        localAudioTrack?.dispose()
+        localAudioTrack = null
+        audioSource?.dispose()
+        audioSource = null
         peerConnectionFactory?.dispose()
         peerConnectionFactory = null
-        report("Disconnected")
+        audioDeviceModule?.release()
+        audioDeviceModule = null
     }
 
     private fun closeConnection() {
@@ -114,6 +140,9 @@ class RealtimeConnectionProbe(
 
         override fun onConnectionChange(state: PeerConnection.PeerConnectionState) {
             report("Peer connection: $state")
+            if (state == PeerConnection.PeerConnectionState.CONNECTED) {
+                report("Realtime audio active")
+            }
         }
 
         override fun onIceConnectionReceivingChange(receiving: Boolean) = Unit
@@ -136,14 +165,26 @@ class RealtimeConnectionProbe(
 
         override fun onAddTrack(receiver: RtpReceiver, mediaStreams: Array<out MediaStream>) = Unit
 
-        override fun onTrack(transceiver: RtpTransceiver) = Unit
+        override fun onTrack(transceiver: RtpTransceiver) {
+            val track = transceiver.receiver.track()
+            if (track is AudioTrack) {
+                track.setEnabled(true)
+                track.setVolume(1.0)
+                report("Remote audio track received")
+            }
+        }
     }
 
     private fun createDataChannelObserver() = object : DataChannel.Observer {
         override fun onBufferedAmountChange(previousAmount: Long) = Unit
 
         override fun onStateChange() {
-            report("Data channel: ${dataChannel?.state()}")
+            val state = dataChannel?.state()
+            report("Data channel: $state")
+            if (state == DataChannel.State.OPEN && !initialGreetingSent) {
+                initialGreetingSent = true
+                sendInitialGreeting()
+            }
         }
 
         override fun onMessage(buffer: DataChannel.Buffer) {
@@ -161,6 +202,26 @@ class RealtimeConnectionProbe(
     }
 
     private fun report(message: String) = onStatus(message)
+
+    private fun sendInitialGreeting() {
+        val event = JSONObject()
+            .put("type", "response.create")
+            .put(
+                "response",
+                JSONObject().put(
+                    "instructions",
+                    "Briefly say: Realtime conversation is ready. What would you like to work on?"
+                )
+            )
+            .toString()
+        val sent = dataChannel?.send(
+            DataChannel.Buffer(
+                ByteBuffer.wrap(event.toByteArray(Charsets.UTF_8)),
+                false
+            )
+        ) == true
+        report(if (sent) "Requested initial greeting" else "Initial greeting failed")
+    }
 
     private suspend fun PeerConnection.createOffer(): SessionDescription =
         suspendCancellableCoroutine { continuation ->
@@ -241,6 +302,8 @@ class RealtimeConnectionProbe(
 
     private companion object {
         const val OPENAI_EVENTS_CHANNEL = "oai-events"
+        const val LOCAL_AUDIO_TRACK_ID = "peloton-microphone"
+        const val LOCAL_MEDIA_STREAM_ID = "peloton-realtime"
     }
 }
 

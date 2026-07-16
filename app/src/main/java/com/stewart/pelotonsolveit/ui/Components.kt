@@ -230,16 +230,19 @@ fun SpeechModeButton(isWhisper: Boolean, onToggleSpeechMode: () -> Unit) {
 }
 
 @Composable
-fun RealtimeProbeButton(
+fun RealtimeConversationButton(
     status: String,
-    enabled: Boolean,
+    active: Boolean,
+    connecting: Boolean,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
-        enabled = enabled,
-        colors = ButtonDefaults.buttonColors(containerColor = ButtonSurface)
+        enabled = !connecting,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (active) DestructiveRed else ButtonSurface
+        )
     ) {
-        Text(status)
+        Text(if (active) "End Conversation" else status)
     }
 }

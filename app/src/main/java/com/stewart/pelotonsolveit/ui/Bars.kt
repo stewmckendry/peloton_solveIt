@@ -23,9 +23,10 @@ fun TopBar(observer: PelotonTreadObserver,
            onToggleDarkMode: () -> Unit,
            isWhisper: Boolean,
            onToggleSpeechMode: () -> Unit,
-           realtimeProbeStatus: String,
-           realtimeProbeEnabled: Boolean,
-           onRealtimeProbeClick: () -> Unit,
+           realtimeStatus: String,
+           realtimeActive: Boolean,
+           realtimeConnecting: Boolean,
+           onRealtimeClick: () -> Unit,
            hasSelectedCell: Boolean,
            isRunningCell: Boolean,
            onRunCell: () -> Unit,
@@ -44,10 +45,11 @@ fun TopBar(observer: PelotonTreadObserver,
                 isRunningCell = isRunningCell,
                 onRunCell = onRunCell
             )
-            RealtimeProbeButton(
-                status = realtimeProbeStatus,
-                enabled = realtimeProbeEnabled,
-                onClick = onRealtimeProbeClick
+            RealtimeConversationButton(
+                status = realtimeStatus,
+                active = realtimeActive,
+                connecting = realtimeConnecting,
+                onClick = onRealtimeClick
             )
             SpeechModeButton(isWhisper, onToggleSpeechMode = onToggleSpeechMode)
             MicButton(micOn, onMicClick = onMicClick)

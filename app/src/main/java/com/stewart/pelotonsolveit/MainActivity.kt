@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import org.vosk.Model
@@ -48,7 +49,7 @@ import com.onepeloton.sensor.tread.TreadSensorManager
 import com.stewart.pelotonsolveit.speech.VoskSpeechEngine
 import com.stewart.pelotonsolveit.speech.WhisperSpeechEngine
 import com.stewart.pelotonsolveit.speech.realtime.DirectOpenAiSessionNegotiator
-import com.stewart.pelotonsolveit.speech.realtime.RealtimeConnectionProbe
+import com.stewart.pelotonsolveit.speech.realtime.RealtimeAudioSession
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -85,24 +86,52 @@ fun PelotonSolveItApp() {
     var greetedDialogs = remember {  mutableSetOf<String>() }
     var canGoBack by remember { mutableStateOf(false) }
     var canGoForward by remember { mutableStateOf(false) }
-    var realtimeProbeStatus by remember { mutableStateOf("Test Realtime") }
-    var realtimeProbeRunning by remember { mutableStateOf(false) }
+    var realtimeStatus by remember { mutableStateOf("Start Conversation") }
+    var realtimeActive by remember { mutableStateOf(false) }
+    var realtimeConnecting by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val realtimeProbe = remember {
-        RealtimeConnectionProbe(
+    val realtimeSession = remember {
+        RealtimeAudioSession(
             context = context,
             negotiator = DirectOpenAiSessionNegotiator(BuildConfig.OPENAI_API_KEY),
             onStatus = { status ->
                 Handler(Looper.getMainLooper()).post {
-                    realtimeProbeStatus = status
-                    Log.d("RealtimeProbe", status)
+                    realtimeStatus = status
+                    Log.d("RealtimeAudio", status)
                 }
             }
         )
     }
-    DisposableEffect(realtimeProbe) {
+    DisposableEffect(realtimeSession) {
         onDispose {
-            realtimeProbe.close()
+            realtimeSession.close()
+        }
+    }
+    val startRealtimeSession = {
+        realtimeConnecting = true
+        realtimeStatus = "Connecting…"
+        coroutineScope.launch {
+            try {
+                realtimeSession.connect()
+                realtimeActive = true
+                realtimeStatus = "End Conversation"
+            } catch (e: Exception) {
+                realtimeSession.close()
+                realtimeActive = false
+                realtimeStatus = "Realtime failed"
+                Log.e("RealtimeAudio", "Realtime audio session failed", e)
+            } finally {
+                realtimeConnecting = false
+            }
+        }
+    }
+    val realtimePermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            startRealtimeSession()
+        } else {
+            realtimeStatus = "Mic permission needed"
         }
     }
     val launcher = rememberLauncherForActivityResult(
@@ -161,20 +190,23 @@ fun PelotonSolveItApp() {
                         isWhisper = !isWhisper
                         Log.d("PelotonSolveIt", "Speech mode: ${if (isWhisper) "Whisper" else "Vosk"}")
                     },
-                    realtimeProbeStatus = realtimeProbeStatus,
-                    realtimeProbeEnabled = !realtimeProbeRunning,
-                    onRealtimeProbeClick = {
-                        realtimeProbeRunning = true
-                        realtimeProbeStatus = "Connecting…"
-                        coroutineScope.launch {
-                            try {
-                                realtimeProbe.connect()
-                            } catch (e: Exception) {
-                                realtimeProbeStatus = "Realtime failed"
-                                Log.e("RealtimeProbe", "Connection probe failed", e)
-                            } finally {
-                                realtimeProbeRunning = false
-                            }
+                    realtimeStatus = realtimeStatus,
+                    realtimeActive = realtimeActive,
+                    realtimeConnecting = realtimeConnecting,
+                    onRealtimeClick = {
+                        if (realtimeActive) {
+                            realtimeSession.close()
+                            realtimeActive = false
+                            realtimeStatus = "Start Conversation"
+                        } else if (
+                            ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.RECORD_AUDIO
+                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        ) {
+                            startRealtimeSession()
+                        } else {
+                            realtimePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
                     },
                     hasSelectedCell = bridge.dlgName.isNotEmpty() && bridge.msgId.isNotEmpty(),
@@ -321,4 +353,3 @@ fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge,
             }.also { onWebViewCreated(it) }
         })
 }
-
