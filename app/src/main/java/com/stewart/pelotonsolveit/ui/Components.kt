@@ -17,6 +17,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -25,13 +28,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.stewart.pelotonsolveit.ui.theme.AccentBlue
 import com.stewart.pelotonsolveit.ui.theme.ButtonSurface
 import com.stewart.pelotonsolveit.ui.theme.DestructiveRed
 import com.stewart.pelotonsolveit.ui.theme.ItemSurface
 import com.stewart.pelotonsolveit.ui.theme.LabelText
 import com.stewart.pelotonsolveit.ui.theme.ValueText
+import kotlinx.coroutines.delay
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
+
+private val easternTimeZone = ZoneId.of("America/Toronto")
+private val clockFormatter = DateTimeFormatter.ofPattern("h:mma", Locale.US)
 
 @Composable
 fun StatItem(label: String, value: String, modifier: Modifier = Modifier) {
@@ -40,6 +51,25 @@ fun StatItem(label: String, value: String, modifier: Modifier = Modifier) {
         Text(value, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = ValueText)
     }
 }
+
+@Composable
+fun EasternTimeClock() {
+    var time by remember { mutableStateOf(formatEasternTime()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            time = formatEasternTime()
+            delay(1_000L)
+        }
+    }
+
+    ItemBox {
+        StatItem(label = "CLOCK", value = time)
+    }
+}
+
+private fun formatEasternTime(): String =
+    ZonedDateTime.now(easternTimeZone).format(clockFormatter)
 
 @Composable
 fun ItemBox(content: @Composable () -> Unit) {

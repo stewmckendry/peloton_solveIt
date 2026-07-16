@@ -31,6 +31,7 @@ fun TopBar(observer: PelotonTreadObserver,
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically) {
             NavButtons(canGoBack, canGoFwd, onBackClick, onFwdClick)
+            EasternTimeClock()
             Spacer(modifier = Modifier.weight(1f))
             SpeechModeButton(isWhisper, onToggleSpeechMode = onToggleSpeechMode)
             MicButton(micOn, onMicClick = onMicClick)
