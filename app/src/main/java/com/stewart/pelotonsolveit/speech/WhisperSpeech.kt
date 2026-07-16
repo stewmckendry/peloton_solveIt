@@ -25,12 +25,16 @@ import java.io.File
 @SuppressLint("MissingPermission")
 class WhisperSpeechEngine(private val context: Context, private val openai_api_key: String) : SpeechEngine,
     Closeable {
+    private companion object {
+        const val END_OF_SPEECH_SILENCE_MS = 3_000
+    }
+
     private val vad = VadSilero(
         context,
         sampleRate = SampleRate.SAMPLE_RATE_16K,
         frameSize = FrameSize.FRAME_SIZE_512,
         mode = Mode.AGGRESSIVE,
-        silenceDurationMs = 700,
+        silenceDurationMs = END_OF_SPEECH_SILENCE_MS,
         speechDurationMs = 150
     )
     override fun listen(): String? {
