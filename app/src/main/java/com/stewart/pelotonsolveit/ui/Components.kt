@@ -228,3 +228,18 @@ fun SpeechModeButton(isWhisper: Boolean, onToggleSpeechMode: () -> Unit) {
         Text(if (isWhisper) "☁️" else "📱")
     }
 }
+
+@Composable
+fun RealtimeProbeButton(
+    status: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(containerColor = ButtonSurface)
+    ) {
+        Text(status)
+    }
+}

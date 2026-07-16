@@ -33,9 +33,11 @@ import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.webkit.WebSettingsCompat
@@ -45,6 +47,9 @@ import org.vosk.Recognizer
 import com.onepeloton.sensor.tread.TreadSensorManager
 import com.stewart.pelotonsolveit.speech.VoskSpeechEngine
 import com.stewart.pelotonsolveit.speech.WhisperSpeechEngine
+import com.stewart.pelotonsolveit.speech.realtime.DirectOpenAiSessionNegotiator
+import com.stewart.pelotonsolveit.speech.realtime.RealtimeConnectionProbe
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
@@ -80,6 +85,26 @@ fun PelotonSolveItApp() {
     var greetedDialogs = remember {  mutableSetOf<String>() }
     var canGoBack by remember { mutableStateOf(false) }
     var canGoForward by remember { mutableStateOf(false) }
+    var realtimeProbeStatus by remember { mutableStateOf("Test Realtime") }
+    var realtimeProbeRunning by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val realtimeProbe = remember {
+        RealtimeConnectionProbe(
+            context = context,
+            negotiator = DirectOpenAiSessionNegotiator(BuildConfig.OPENAI_API_KEY),
+            onStatus = { status ->
+                Handler(Looper.getMainLooper()).post {
+                    realtimeProbeStatus = status
+                    Log.d("RealtimeProbe", status)
+                }
+            }
+        )
+    }
+    DisposableEffect(realtimeProbe) {
+        onDispose {
+            realtimeProbe.close()
+        }
+    }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -135,6 +160,22 @@ fun PelotonSolveItApp() {
                     onToggleSpeechMode = {
                         isWhisper = !isWhisper
                         Log.d("PelotonSolveIt", "Speech mode: ${if (isWhisper) "Whisper" else "Vosk"}")
+                    },
+                    realtimeProbeStatus = realtimeProbeStatus,
+                    realtimeProbeEnabled = !realtimeProbeRunning,
+                    onRealtimeProbeClick = {
+                        realtimeProbeRunning = true
+                        realtimeProbeStatus = "Connecting…"
+                        coroutineScope.launch {
+                            try {
+                                realtimeProbe.connect()
+                            } catch (e: Exception) {
+                                realtimeProbeStatus = "Realtime failed"
+                                Log.e("RealtimeProbe", "Connection probe failed", e)
+                            } finally {
+                                realtimeProbeRunning = false
+                            }
+                        }
                     },
                     hasSelectedCell = bridge.dlgName.isNotEmpty() && bridge.msgId.isNotEmpty(),
                     isRunningCell = isRunningCell,
@@ -280,5 +321,4 @@ fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge,
             }.also { onWebViewCreated(it) }
         })
 }
-
 
