@@ -121,7 +121,7 @@ fun whisperTranscribe(file: File, openai_api_key: String): String {
     val client = OkHttpClient()
     val body = MultipartBody.Builder()
         .setType(MultipartBody.FORM)
-        .addFormDataPart("model", "whisper-1")
+        .addFormDataPart("model", "gpt-4o-mini-transcribe")
         .addFormDataPart("language", "en")
         .addFormDataPart("response_format", "json")
         .addFormDataPart("file", "recording.wav",
