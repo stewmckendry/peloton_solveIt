@@ -12,13 +12,18 @@ fun solveItPost(path: String, params: Map<String, String>): String {
     params.forEach { (k, v) -> bodyBuilder.add(k, v) }
     Log.d("PelotonSolveIt", "POST $path params=$params")
     val request = Request.Builder()
-        .url("${BuildConfig.SOLVEIT_URL}/$path")
+        .url("${BuildConfig.SOLVEIT_URL.trimEnd('/')}/$path")
         .addHeader("Cookie", "_solveit=${BuildConfig.SOLVEIT_TOKEN}")
         .post(bodyBuilder.build())
         .build()
-    val responseBody = client.newCall(request).execute().body?.string() ?: ""
-    Log.d("PelotonSolveIt", "Response: $responseBody")
-    return responseBody
+    client.newCall(request).execute().use { response ->
+        val responseBody = response.body?.string() ?: ""
+        Log.d("PelotonSolveIt", "Response ${response.code}: $responseBody")
+        if (!response.isSuccessful) {
+            throw IllegalStateException("SolveIt request $path failed with HTTP ${response.code}: $responseBody")
+        }
+        return responseBody
+    }
 }
 
 fun sendToSolveIt(msg: String, bridge: SolveItJSBridge, pin: Boolean = false, placement: String? = null) {
