@@ -23,6 +23,9 @@ fun TopBar(observer: PelotonTreadObserver,
            onToggleDarkMode: () -> Unit,
            isWhisper: Boolean,
            onToggleSpeechMode: () -> Unit,
+           hasSelectedCell: Boolean,
+           isRunningCell: Boolean,
+           onRunCell: () -> Unit,
            canGoFwd: Boolean,
            onFwdClick: () -> Unit,
            canGoBack: Boolean,
@@ -33,6 +36,11 @@ fun TopBar(observer: PelotonTreadObserver,
             NavButtons(canGoBack, canGoFwd, onBackClick, onFwdClick)
             EasternTimeClock()
             Spacer(modifier = Modifier.weight(1f))
+            CellActionsMenu(
+                hasSelectedCell = hasSelectedCell,
+                isRunningCell = isRunningCell,
+                onRunCell = onRunCell
+            )
             SpeechModeButton(isWhisper, onToggleSpeechMode = onToggleSpeechMode)
             MicButton(micOn, onMicClick = onMicClick)
             WorkoutButtons(observer = observer)

@@ -54,6 +54,26 @@ fun sendToSolveIt(msg: String, bridge: SolveItJSBridge, pin: Boolean = false, pl
     }
 }
 
+fun runSolveItCell(bridge: SolveItJSBridge): Boolean {
+    val dlgName = bridge.dlgName
+    val msgId = bridge.msgId
+    if (dlgName.isEmpty() || msgId.isEmpty()) {
+        Log.d("PelotonSolveIt", "Run cell skipped - no dlgName ($dlgName) or msgId ($msgId) found")
+        return false
+    }
+
+    val result = solveItPost(
+        "add_runq_",
+        mapOf(
+            "dlg_name" to dlgName,
+            "id_" to msgId,
+            "api" to "true"
+        )
+    )
+    Log.d("PelotonSolveIt", "Run cell $msgId - result=$result")
+    return true
+}
+
 fun greetingExists(bridge: SolveItJSBridge) : Boolean {
     val dlgName = bridge.dlgName
     Log.d("PelotonSolveIt", "Greeting Check on dlgName: $dlgName")
@@ -74,4 +94,3 @@ fun greetingExists(bridge: SolveItJSBridge) : Boolean {
     Log.d("PelotonSolveIt", "Greeting check: found ${msgs.length()} matching messages")
     return msgs.length() > 0
 }
-

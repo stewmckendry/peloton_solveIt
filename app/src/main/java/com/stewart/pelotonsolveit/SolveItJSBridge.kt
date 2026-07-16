@@ -2,10 +2,15 @@ package com.stewart.pelotonsolveit
 
 import android.util.Log
 import android.webkit.JavascriptInterface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 class SolveItJSBridge {
-    var dlgName: String = ""
-    var msgId: String = ""
+    var dlgName by mutableStateOf("")
+        private set
+    var msgId by mutableStateOf("")
+        private set
 
     @JavascriptInterface
     fun setFocusedMessage(dlgName: String?, msgId: String?) {

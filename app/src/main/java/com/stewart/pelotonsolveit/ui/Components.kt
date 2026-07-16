@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -114,6 +116,37 @@ fun NavButtons(canGoBack: Boolean, canGoFwd: Boolean, onBackClick: () -> Unit, o
             onClick = onFwdClick,
             enabled = canGoFwd) {
             Text("▶️")
+        }
+    }
+}
+
+@Composable
+fun CellActionsMenu(
+    hasSelectedCell: Boolean,
+    isRunningCell: Boolean,
+    onRunCell: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        Button(
+            onClick = { expanded = true },
+            colors = ButtonDefaults.buttonColors(containerColor = ButtonSurface)
+        ) {
+            Text(if (isRunningCell) "Running…" else "Cell Actions ▾")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("▶ Run Cell", fontSize = 20.sp) },
+                enabled = hasSelectedCell && !isRunningCell,
+                onClick = {
+                    expanded = false
+                    onRunCell()
+                }
+            )
         }
     }
 }

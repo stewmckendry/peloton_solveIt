@@ -69,11 +69,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun PelotonSolveItApp() {
     val context = LocalContext.current
-    val bridge = SolveItJSBridge()
-    var webView: WebView? = null
+    val bridge = remember { SolveItJSBridge() }
+    var webView by remember { mutableStateOf<WebView?>(null) }
     var isDarkMode by remember { mutableStateOf(true) }
     var isWhisper by remember { mutableStateOf(value=true)}
     var micOn by remember { mutableStateOf(value=false)}
+    var isRunningCell by remember { mutableStateOf(false) }
     var whisperer = remember {  WhisperSpeechEngine(context, BuildConfig.OPENAI_API_KEY) }
     var vosker = remember { VoskSpeechEngine(context) }
     var greetedDialogs = remember {  mutableSetOf<String>() }
@@ -134,6 +135,26 @@ fun PelotonSolveItApp() {
                     onToggleSpeechMode = {
                         isWhisper = !isWhisper
                         Log.d("PelotonSolveIt", "Speech mode: ${if (isWhisper) "Whisper" else "Vosk"}")
+                    },
+                    hasSelectedCell = bridge.dlgName.isNotEmpty() && bridge.msgId.isNotEmpty(),
+                    isRunningCell = isRunningCell,
+                    onRunCell = {
+                        isRunningCell = true
+                        Thread {
+                            try {
+                                if (runSolveItCell(bridge)) {
+                                    Handler(Looper.getMainLooper()).post {
+                                        webView?.reload()
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.e("PelotonSolveIt", "Run cell error: ${e.message}", e)
+                            } finally {
+                                Handler(Looper.getMainLooper()).post {
+                                    isRunningCell = false
+                                }
+                            }
+                        }.start()
                     },
                     canGoForward,
                     onFwdClick = {
@@ -259,6 +280,5 @@ fun SolveItWebView(modifier: Modifier = Modifier, bridge: SolveItJSBridge,
             }.also { onWebViewCreated(it) }
         })
 }
-
 
 
