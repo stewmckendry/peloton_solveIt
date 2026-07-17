@@ -6,6 +6,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
+data class SolveItUiContext(
+    val visibleDialogName: String?,
+    val selectedMessageId: String?
+)
+
 class SolveItJSBridge {
     var dlgName by mutableStateOf("")
         private set
@@ -23,4 +28,8 @@ class SolveItJSBridge {
         }
     }
 
+    fun snapshot(): SolveItUiContext = SolveItUiContext(
+        visibleDialogName = dlgName.takeIf { it.isNotBlank() },
+        selectedMessageId = msgId.takeIf { it.isNotBlank() }
+    )
 }

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 interface RealtimeConversationEngine {
     val state: StateFlow<RealtimeState>
 
-    suspend fun start(context: SolveItContext)
+    suspend fun start()
 
     suspend fun stop()
 
