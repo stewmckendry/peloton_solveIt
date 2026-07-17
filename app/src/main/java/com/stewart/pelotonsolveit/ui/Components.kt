@@ -86,7 +86,7 @@ fun ItemBox(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun MicButton(micOn: Boolean, onMicClick: () -> Unit) {
+fun MicButton(micOn: Boolean, enabled: Boolean, onMicClick: () -> Unit) {
     val color = if( micOn ) DestructiveRed else AccentBlue
     val alpha by animateFloatAsState(
         targetValue = if (micOn) 0.3f else 1f,
@@ -99,6 +99,7 @@ fun MicButton(micOn: Boolean, onMicClick: () -> Unit) {
     Button(
         modifier = Modifier.graphicsLayer { this.alpha = alpha },
         onClick = onMicClick,
+        enabled = enabled,
         colors = ButtonDefaults.buttonColors(containerColor = color)) {
         Text("Ask solveit 🎤")
     }
@@ -234,11 +235,12 @@ fun RealtimeConversationButton(
     status: String,
     active: Boolean,
     connecting: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
-        enabled = !connecting,
+        enabled = enabled && !connecting,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (active) DestructiveRed else ButtonSurface
         )

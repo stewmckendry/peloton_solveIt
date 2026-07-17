@@ -52,6 +52,7 @@ class RealtimeSolveItToolsTest {
         val call = tools.parseToolCall(
             JSONObject()
                 .put("type", "response.function_call_arguments.done")
+                .put("response_id", "response-123")
                 .put("call_id", "call-123")
                 .put("name", "get_ui_context")
                 .put("arguments", "{}")
@@ -62,6 +63,7 @@ class RealtimeSolveItToolsTest {
         val item = output.getJSONObject("item")
 
         assertEquals("get_ui_context", call.name)
+        assertEquals("response-123", call.responseId)
         assertEquals("conversation.item.create", output.getString("type"))
         assertEquals("function_call_output", item.getString("type"))
         assertEquals("call-123", item.getString("call_id"))
@@ -147,6 +149,7 @@ class RealtimeSolveItToolsTest {
     ) = RealtimeSolveItTools(uiContextProvider, workspace, client)
 
     private fun call(name: String, arguments: JSONObject = JSONObject()) = RealtimeToolCall(
+        responseId = "response-id",
         callId = "call-id",
         name = name,
         arguments = arguments

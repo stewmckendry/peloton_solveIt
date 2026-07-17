@@ -10,7 +10,10 @@ fun solveItPost(path: String, params: Map<String, String>): String {
     val client = OkHttpClient()
     val bodyBuilder = FormBody.Builder()
     params.forEach { (k, v) -> bodyBuilder.add(k, v) }
-    Log.d("PelotonSolveIt", "POST $path params=$params")
+    Log.d(
+        "PelotonSolveIt",
+        "POST $path fields=${params.keys.sorted()} bodyChars=${params.values.sumOf(String::length)}"
+    )
     val request = Request.Builder()
         .url("${BuildConfig.SOLVEIT_URL.trimEnd('/')}/$path")
         .addHeader("Cookie", "_solveit=${BuildConfig.SOLVEIT_TOKEN}")
@@ -18,9 +21,15 @@ fun solveItPost(path: String, params: Map<String, String>): String {
         .build()
     client.newCall(request).execute().use { response ->
         val responseBody = response.body?.string() ?: ""
-        Log.d("PelotonSolveIt", "Response ${response.code}: $responseBody")
+        Log.d(
+            "PelotonSolveIt",
+            "Response $path status=${response.code} bodyChars=${responseBody.length}"
+        )
         if (!response.isSuccessful) {
-            throw IllegalStateException("SolveIt request $path failed with HTTP ${response.code}: $responseBody")
+            throw IllegalStateException(
+                "SolveIt request $path failed with HTTP ${response.code} " +
+                    "(response body ${responseBody.length} characters)"
+            )
         }
         return responseBody
     }
@@ -46,16 +55,16 @@ fun sendToSolveIt(msg: String, bridge: SolveItJSBridge, pin: Boolean = false, pl
         params)
     val json = JSONObject(addMsgResult)
     val newMsgId = json.getString("id")
-    Log.d("PelotonSolveIt", "POST to SolveIt - add $newMsgId - result - $addMsgResult")
-    val runMsgResult = solveItPost(
+    Log.d("PelotonSolveIt", "POST to SolveIt - added $newMsgId")
+    solveItPost(
         "add_runq_",
         mapOf("dlg_name" to dlgName,
             "id_" to newMsgId,
             "api" to "true"))
-    Log.d("PelotonSolveIt", "POST to SolveIt - run $newMsgId - result=$runMsgResult")
+    Log.d("PelotonSolveIt", "POST to SolveIt - queued $newMsgId")
     if (pin) {
-        val updateMsgResult = solveItPost("update_msg_", mapOf("dlg_name" to dlgName, "id_" to newMsgId, "pinned" to "1"))
-        Log.d("PelotonSolveIt", "POST to SolveIt - update msg $newMsgId to pinned - result $updateMsgResult")
+        solveItPost("update_msg_", mapOf("dlg_name" to dlgName, "id_" to newMsgId, "pinned" to "1"))
+        Log.d("PelotonSolveIt", "POST to SolveIt - pinned $newMsgId")
     }
 }
 
@@ -67,7 +76,7 @@ fun runSolveItCell(bridge: SolveItJSBridge): Boolean {
         return false
     }
 
-    val result = solveItPost(
+    solveItPost(
         "add_runq_",
         mapOf(
             "dlg_name" to dlgName,
@@ -75,7 +84,7 @@ fun runSolveItCell(bridge: SolveItJSBridge): Boolean {
             "api" to "true"
         )
     )
-    Log.d("PelotonSolveIt", "Run cell $msgId - result=$result")
+    Log.d("PelotonSolveIt", "Run cell $msgId queued")
     return true
 }
 

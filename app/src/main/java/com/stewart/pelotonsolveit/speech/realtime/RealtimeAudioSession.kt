@@ -39,7 +39,7 @@ internal class RealtimeAudioSession(
     context: Context,
     private val negotiator: RealtimeSessionNegotiator,
     private val solveItTools: RealtimeSolveItTools,
-    private val onStatus: (String) -> Unit
+    private val onDiagnostic: (String) -> Unit
 ) : Closeable {
     private val applicationContext = context.applicationContext
     private var audioDeviceModule: JavaAudioDeviceModule? = null
@@ -51,10 +51,12 @@ internal class RealtimeAudioSession(
     private var initialGreetingSent = false
     private var eventScope = newEventScope()
     private val toolCallMutex = Mutex()
+    private val toolCallBatcher = RealtimeToolCallBatcher()
 
     suspend fun connect(config: RealtimeSessionConfig = RealtimeSessionConfig()) {
         close()
         eventScope = newEventScope()
+        toolCallBatcher.clear()
         initialGreetingSent = false
         report("Initializing WebRTC")
 
@@ -114,6 +116,7 @@ internal class RealtimeAudioSession(
 
     override fun close() {
         eventScope.cancel()
+        toolCallBatcher.clear()
         closeConnection()
         localAudioTrack?.setEnabled(false)
         localAudioTrack?.dispose()
@@ -213,20 +216,28 @@ internal class RealtimeAudioSession(
             if (eventType.isNotBlank()) {
                 report("OpenAI event: $eventType")
             }
-            val call = runCatching { solveItTools.parseToolCall(event) }
+            if (eventType == "error") {
+                report(describeRealtimeError(event))
+                return
+            }
+            val calls = runCatching { toolCallBatcher.accept(event, solveItTools) }
                 .getOrElse {
-                    report("Invalid tool call event: ${it.message}")
+                    report("Invalid Realtime tool event: ${it.message}")
                     return
                 } ?: return
+            if (calls.isEmpty()) return
             eventScope.launch {
                 toolCallMutex.withLock {
-                    report("Running tool: ${call.name}")
-                    val result = solveItTools.execute(call)
-                    val outputSent = sendEvent(
-                        solveItTools.functionOutputEvent(call.callId, result),
-                        "Returned tool result: ${call.name}"
-                    )
-                    if (outputSent) {
+                    var allOutputsSent = true
+                    calls.forEach { call ->
+                        report("Running tool: ${call.name}")
+                        val result = solveItTools.execute(call)
+                        allOutputsSent = sendEvent(
+                            solveItTools.functionOutputEvent(call.callId, result),
+                            "Returned tool result: ${call.name}"
+                        ) && allOutputsSent
+                    }
+                    if (allOutputsSent) {
                         sendEvent(solveItTools.continueResponseEvent())
                     }
                 }
@@ -234,7 +245,7 @@ internal class RealtimeAudioSession(
         }
     }
 
-    private fun report(message: String) = onStatus(message)
+    private fun report(message: String) = onDiagnostic(message)
 
     private fun sendInitialGreeting() {
         val event = JSONObject()

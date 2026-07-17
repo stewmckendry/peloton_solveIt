@@ -111,10 +111,11 @@ fun PelotonSolveItApp() {
             context = context,
             negotiator = DirectOpenAiSessionNegotiator(BuildConfig.OPENAI_API_KEY),
             solveItTools = realtimeSolveItTools,
-            onStatus = { status ->
-                Handler(Looper.getMainLooper()).post {
-                    realtimeStatus = status
-                    Log.d("RealtimeAudio", status)
+            onDiagnostic = { message ->
+                if (message.startsWith("OpenAI error")) {
+                    Log.e("RealtimeAudio", message)
+                } else {
+                    Log.d("RealtimeAudio", message)
                 }
             }
         )
@@ -149,6 +150,7 @@ fun PelotonSolveItApp() {
         if (isGranted) {
             startRealtimeSession()
         } else {
+            realtimeConnecting = false
             realtimeStatus = "Mic permission needed"
         }
     }
@@ -158,21 +160,26 @@ fun PelotonSolveItApp() {
         if (isGranted) {
             @SuppressLint("MissingPermission")
             Thread {
-                startListening(isWhisper, whisperer, vosker) { transcript ->
-                    Log.d("PelotonSolveIt", "Transcript: $transcript")
+                try {
+                    startListening(isWhisper, whisperer, vosker) { transcript ->
+                        Log.d("PelotonSolveIt", "Speech transcript received (${transcript.length} chars)")
+                        Thread {
+                            try {
+                                sendToSolveIt("[From the Peloton] " + transcript, bridge)
+                            } catch (e: Exception) {
+                                Log.e("PelotonSolveIt", "Error: ${e.message}", e)
+                            }
+                        }.start()
+                    }
+                } finally {
                     Handler(Looper.getMainLooper()).post {
                         micOn = false
                         Log.d("PelotonSolveIt", "micOn set to false")
                     }
-                    Thread {
-                        try {
-                            sendToSolveIt("[From the Peloton] " + transcript, bridge)
-                        } catch (e: Exception) {
-                            Log.e("PelotonSolveIt", "Error: ${e.message}", e)
-                        }
-                    }.start()
                 }
             }.start()
+        } else {
+            micOn = false
         }
     }
     val observer = remember { PelotonTreadObserver() }
@@ -188,6 +195,7 @@ fun PelotonSolveItApp() {
                     observer = observer,
                     webView = webView,
                     micOn = micOn,
+                    micEnabled = !realtimeActive && !realtimeConnecting && !micOn,
                     onMicClick = {
                         micOn = true
                         launcher.launch(Manifest.permission.RECORD_AUDIO)
@@ -211,6 +219,7 @@ fun PelotonSolveItApp() {
                     realtimeStatus = realtimeStatus,
                     realtimeActive = realtimeActive,
                     realtimeConnecting = realtimeConnecting,
+                    realtimeEnabled = realtimeActive || (!realtimeConnecting && !micOn),
                     onRealtimeClick = {
                         if (realtimeActive) {
                             realtimeSession.close()
@@ -224,6 +233,8 @@ fun PelotonSolveItApp() {
                         ) {
                             startRealtimeSession()
                         } else {
+                            realtimeConnecting = true
+                            realtimeStatus = "Mic permission…"
                             realtimePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
                     },
@@ -285,7 +296,7 @@ fun startListening(isWhisper: Boolean, whisperer: WhisperSpeechEngine,
     else {
         transcript = vosker.listen() ?: return
     }
-    Log.d("PelotonSolveIt", "Transcript: $transcript")
+    Log.d("PelotonSolveIt", "Speech engine returned ${transcript.length} characters")
     if (transcript.isBlank()) Log.w("VoskSpeechEngine", "Warning: empty transcript returned")
     onResult(transcript)
 }

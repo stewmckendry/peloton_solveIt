@@ -15,6 +15,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 internal data class RealtimeToolCall(
+    val responseId: String,
     val callId: String,
     val name: String,
     val arguments: JSONObject
@@ -87,6 +88,7 @@ internal class RealtimeSolveItTools(
         if (event.optString("type") != FUNCTION_ARGUMENTS_DONE_EVENT) return null
         val argumentsText = event.optString("arguments", "{}")
         return RealtimeToolCall(
+            responseId = event.requiredString("response_id"),
             callId = event.requiredString("call_id"),
             name = event.requiredString("name"),
             arguments = if (argumentsText.isBlank()) JSONObject() else JSONObject(argumentsText)

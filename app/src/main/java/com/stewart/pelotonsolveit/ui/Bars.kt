@@ -18,6 +18,7 @@ import com.stewart.pelotonsolveit.ui.theme.BarBackground
 fun TopBar(observer: PelotonTreadObserver,
            webView: WebView?,
            micOn: Boolean,
+           micEnabled: Boolean,
            onMicClick: () -> Unit,
            isDarkMode: Boolean,
            onToggleDarkMode: () -> Unit,
@@ -26,6 +27,7 @@ fun TopBar(observer: PelotonTreadObserver,
            realtimeStatus: String,
            realtimeActive: Boolean,
            realtimeConnecting: Boolean,
+           realtimeEnabled: Boolean,
            onRealtimeClick: () -> Unit,
            hasSelectedCell: Boolean,
            isRunningCell: Boolean,
@@ -49,10 +51,11 @@ fun TopBar(observer: PelotonTreadObserver,
                 status = realtimeStatus,
                 active = realtimeActive,
                 connecting = realtimeConnecting,
+                enabled = realtimeEnabled,
                 onClick = onRealtimeClick
             )
             SpeechModeButton(isWhisper, onToggleSpeechMode = onToggleSpeechMode)
-            MicButton(micOn, onMicClick = onMicClick)
+            MicButton(micOn, enabled = micEnabled, onMicClick = onMicClick)
             WorkoutButtons(observer = observer)
             BrightButton(isDarkMode, onToggleDarkMode = onToggleDarkMode)
         }
