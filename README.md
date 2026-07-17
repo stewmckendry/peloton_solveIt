@@ -10,6 +10,7 @@ An Android app that turns your Peloton Tread into a hands-free AI workstation. R
 
 - 📱 **Full-screen SolveIt WebView** — browse and interact with any SolveIt dialog while running
 - 🎤 **Hands-free voice input** — tap mic, speak, transcript is sent to SolveIt as a prompt
+- 🗣️ **Realtime conversation** — talk naturally with an OpenAI Realtime model that can read and edit a selected SolveIt dialog
 - 🤖 **Live AI responses** — SolveIt replies stream into the WebView automatically
 - 📊 **Live treadmill stats** — speed, incline, pace, distance, and elapsed time from Peloton hardware sensors
 - 🏃 **Workout tracking** — start/pause/resume/stop with distance and timer
@@ -20,6 +21,8 @@ An Android app that turns your Peloton Tread into a hands-free AI workstation. R
 ---
 
 ## Architecture
+
+For the bidirectional speech architecture, event protocol, and SolveIt tool integration, see [PelotonSolveIt Realtime Engine](docs/realtime-engine.md).
 
 Four components work together:
 
