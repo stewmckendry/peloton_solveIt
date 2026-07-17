@@ -20,6 +20,13 @@ import java.io.Closeable
 import java.nio.ByteBuffer
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
@@ -28,9 +35,10 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  * WebRTC captures and sends the local microphone track and automatically plays
  * the remote audio track through Android's active audio output.
  */
-class RealtimeAudioSession(
+internal class RealtimeAudioSession(
     context: Context,
     private val negotiator: RealtimeSessionNegotiator,
+    private val solveItTools: RealtimeSolveItTools,
     private val onStatus: (String) -> Unit
 ) : Closeable {
     private val applicationContext = context.applicationContext
@@ -41,9 +49,12 @@ class RealtimeAudioSession(
     private var peerConnection: PeerConnection? = null
     private var dataChannel: DataChannel? = null
     private var initialGreetingSent = false
+    private var eventScope = newEventScope()
+    private val toolCallMutex = Mutex()
 
     suspend fun connect(config: RealtimeSessionConfig = RealtimeSessionConfig()) {
         close()
+        eventScope = newEventScope()
         initialGreetingSent = false
         report("Initializing WebRTC")
 
@@ -102,6 +113,7 @@ class RealtimeAudioSession(
     }
 
     override fun close() {
+        eventScope.cancel()
         closeConnection()
         localAudioTrack?.setEnabled(false)
         localAudioTrack?.dispose()
@@ -183,6 +195,7 @@ class RealtimeAudioSession(
             report("Data channel: $state")
             if (state == DataChannel.State.OPEN && !initialGreetingSent) {
                 initialGreetingSent = true
+                sendEvent(solveItTools.sessionUpdateEvent(), "Configured SolveIt tools")
                 sendInitialGreeting()
             }
         }
@@ -191,12 +204,32 @@ class RealtimeAudioSession(
             if (buffer.binary) return
             val bytes = ByteArray(buffer.data.remaining())
             buffer.data.get(bytes)
-            val event = bytes.toString(Charsets.UTF_8)
-            val eventType = runCatching {
-                JSONObject(event).optString("type")
-            }.getOrDefault("")
+            val event = runCatching { JSONObject(bytes.toString(Charsets.UTF_8)) }
+                .getOrElse {
+                    report("Ignored malformed OpenAI event")
+                    return
+                }
+            val eventType = event.optString("type")
             if (eventType.isNotBlank()) {
                 report("OpenAI event: $eventType")
+            }
+            val call = runCatching { solveItTools.parseToolCall(event) }
+                .getOrElse {
+                    report("Invalid tool call event: ${it.message}")
+                    return
+                } ?: return
+            eventScope.launch {
+                toolCallMutex.withLock {
+                    report("Running tool: ${call.name}")
+                    val result = solveItTools.execute(call)
+                    val outputSent = sendEvent(
+                        solveItTools.functionOutputEvent(call.callId, result),
+                        "Returned tool result: ${call.name}"
+                    )
+                    if (outputSent) {
+                        sendEvent(solveItTools.continueResponseEvent())
+                    }
+                }
             }
         }
     }
@@ -213,15 +246,24 @@ class RealtimeAudioSession(
                     "Briefly say: Realtime conversation is ready. What would you like to work on?"
                 )
             )
-            .toString()
+        val sent = sendEvent(event)
+        report(if (sent) "Requested initial greeting" else "Initial greeting failed")
+    }
+
+    private fun sendEvent(event: JSONObject, successStatus: String? = null): Boolean {
+        val bytes = event.toString().toByteArray(Charsets.UTF_8)
         val sent = dataChannel?.send(
             DataChannel.Buffer(
-                ByteBuffer.wrap(event.toByteArray(Charsets.UTF_8)),
+                ByteBuffer.wrap(bytes),
                 false
             )
         ) == true
-        report(if (sent) "Requested initial greeting" else "Initial greeting failed")
+        if (sent && successStatus != null) report(successStatus)
+        if (!sent) report("Failed to send event: ${event.optString("type")}")
+        return sent
     }
+
+    private fun newEventScope() = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private suspend fun PeerConnection.createOffer(): SessionDescription =
         suspendCancellableCoroutine { continuation ->

@@ -50,6 +50,8 @@ import com.stewart.pelotonsolveit.speech.VoskSpeechEngine
 import com.stewart.pelotonsolveit.speech.WhisperSpeechEngine
 import com.stewart.pelotonsolveit.speech.realtime.DirectOpenAiSessionNegotiator
 import com.stewart.pelotonsolveit.speech.realtime.RealtimeAudioSession
+import com.stewart.pelotonsolveit.speech.realtime.RealtimeSolveItTools
+import com.stewart.pelotonsolveit.speech.realtime.RealtimeWorkspace
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -90,10 +92,25 @@ fun PelotonSolveItApp() {
     var realtimeActive by remember { mutableStateOf(false) }
     var realtimeConnecting by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val realtimeWorkspace = remember { RealtimeWorkspace() }
+    val realtimeSolveItTools = remember(bridge, realtimeWorkspace) {
+        RealtimeSolveItTools(
+            uiContextProvider = { bridge.snapshot() },
+            workspace = realtimeWorkspace,
+            onDialogChanged = { changedDialog ->
+                Handler(Looper.getMainLooper()).post {
+                    if (bridge.snapshot().visibleDialogName == changedDialog) {
+                        webView?.reload()
+                    }
+                }
+            }
+        )
+    }
     val realtimeSession = remember {
         RealtimeAudioSession(
             context = context,
             negotiator = DirectOpenAiSessionNegotiator(BuildConfig.OPENAI_API_KEY),
+            solveItTools = realtimeSolveItTools,
             onStatus = { status ->
                 Handler(Looper.getMainLooper()).post {
                     realtimeStatus = status
@@ -108,6 +125,7 @@ fun PelotonSolveItApp() {
         }
     }
     val startRealtimeSession = {
+        realtimeWorkspace.clear()
         realtimeConnecting = true
         realtimeStatus = "Connecting…"
         coroutineScope.launch {
